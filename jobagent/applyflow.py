@@ -80,12 +80,11 @@ def wait_outcome(page: Page, browser, confirm_re) -> str:
 
 
 def mark_applied(db_id: int) -> None:
-    from . import db
+    from .db import Database
 
-    conn = db.connect()
-    db.set_status(conn, db_id, "applied")
-    conn.commit()
-    conn.close()
+    with Database() as d:
+        d.jobs.set_status(db_id, "applied")
+        d.commit()
 
 
 def keep_session_until_closed(context, browser, path: Path) -> None:

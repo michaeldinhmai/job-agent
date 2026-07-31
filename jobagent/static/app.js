@@ -11,8 +11,22 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 });
 
 function escapeHtml(s) {
+  // Escapes quotes too, not just <>& — several call sites use this inside
+  // attribute values (title="...", value="...") where an unescaped quote
+  // would break out of the attribute.
   return (s ?? "").toString()
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function safeHref(url) {
+  // Only allow http(s) links as hrefs — blocks javascript:/data: URI XSS
+  // even after HTML-escaping, since an escaped javascript: URI still runs.
+  try {
+    const u = new URL(url, window.location.origin);
+    if (u.protocol === "http:" || u.protocol === "https:") return escapeHtml(url);
+  } catch (e) { /* invalid URL */ }
+  return "#";
 }
 
 function closeModal() {
@@ -94,7 +108,7 @@ async function loadJobs() {
       </td>
       <td>${escapeHtml(j.hiring_manager) || "—"}</td>
       <td>${escapeHtml(j.source)}</td>
-      <td><a href="${j.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">open ↗</a></td>
+      <td><a href="${safeHref(j.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">open ↗</a></td>
     </tr>
   `;
   }).join("") || `<tr><td colspan="8">No matches for this filter.</td></tr>`;
@@ -126,7 +140,7 @@ async function showJobDetail(id) {
     <h2>${escapeHtml(j.title)}</h2>
     <div class="field"><label>Company</label><div>${escapeHtml(j.company)}</div></div>
     <div class="field"><label>Location (as listed)</label><div>${escapeHtml(j.location)}</div></div>
-    <div class="field"><label>City / State / Country</label>
+    <div class="field"><label>Location (city / state / country)</label>
       <div>${escapeHtml(j.city) || "—"} / ${escapeHtml(j.state) || "—"} / ${escapeHtml(j.country) || "—"}</div>
     </div>
     <div class="field"><label>Match % / status / source</label>
@@ -140,7 +154,7 @@ async function showJobDetail(id) {
     <div class="field"><label>Description</label><pre class="desc">${escapeHtml(j.description)}</pre></div>
     <div id="job-tool-result" class="field"></div>
     <div class="actions">
-      <a href="${j.url}" target="_blank" rel="noopener"><button>Open listing ↗</button></a>
+      <a href="${safeHref(j.url)}" target="_blank" rel="noopener"><button>Open listing ↗</button></a>
       <button id="run-tailor">Tailor gap-report</button>
       <button id="run-findhm">Find hiring manager</button>
       <button id="run-apply">Pre-fill application</button>

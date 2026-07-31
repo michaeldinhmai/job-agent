@@ -1,8 +1,10 @@
 """Local read/track UI for job-agent. Run: python -m jobagent.webapp
 
 Serves a single-page dashboard over jobs.db: browse/filter/search matches,
-change status inline, view full listing detail, and browse/log contacts.
-Does not ingest, tailor, or apply — those stay CLI/scheduled-task driven.
+change status inline, view full listing detail, browse/log contacts, and run
+every CLI action (ingest/rescore/digest/schedule/tailor/find-hm/apply) from
+the UI. Pipeline actions shell out to the real CLI via subprocess so there's
+one code path for both interfaces.
 """
 
 from __future__ import annotations
@@ -16,12 +18,29 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
 
-from . import cli, db, matcher
+from . import cli, matcher
 from . import locations as geo
+from .db import ROOT, STATUSES, Database
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 PY = sys.executable
+
+_ALLOWED_ORIGINS = {"http://127.0.0.1:5151", "http://localhost:5151"}
+
+
+@app.before_request
+def _block_cross_origin_writes():
+    """CSRF guard: reject state-changing requests whose Origin isn't this
+    dashboard. This server binds to 127.0.0.1 only, but that doesn't stop a
+    page open in another tab from firing a cross-origin POST/DELETE at it —
+    some of these endpoints are consequential (delete, launching a real
+    browser with real profile data for Apply), so it's worth the check even
+    though GET requests (read-only) are left unrestricted."""
+    if request.method in ("POST", "PATCH", "DELETE", "PUT"):
+        origin = request.headers.get("Origin")
+        if origin is not None and origin not in _ALLOWED_ORIGINS:
+            return jsonify({"error": "cross-origin request blocked"}), 403
 
 
 def _run_cli(*args: str, timeout: int = 120) -> dict:
@@ -31,7 +50,7 @@ def _run_cli(*args: str, timeout: int = 120) -> dict:
     try:
         proc = subprocess.run(
             [PY, "-m", "jobagent", *args],
-            cwd=str(db.ROOT), capture_output=True, text=True, timeout=timeout,
+            cwd=str(ROOT), capture_output=True, text=True, timeout=timeout,
         )
         return {"ok": proc.returncode == 0, "returncode": proc.returncode,
                 "stdout": proc.stdout, "stderr": proc.stderr}
@@ -58,42 +77,38 @@ def index():
 
 @app.get("/api/status")
 def api_status():
-    conn = db.connect()
-    counts = db.counts(conn)
-    n_contacts = conn.execute("SELECT COUNT(*) c FROM contacts").fetchone()["c"]
-    conn.close()
+    with Database() as d:
+        counts = d.jobs.counts()
+        n_contacts = d.conn.execute("SELECT COUNT(*) c FROM contacts").fetchone()["c"]
     return jsonify({
-        "counts": {s: counts.get(s, 0) for s in db.STATUSES},
+        "counts": {s: counts.get(s, 0) for s in STATUSES},
         "total": sum(counts.values()),
         "contacts": n_contacts,
-        "statuses": list(db.STATUSES),
+        "statuses": list(STATUSES),
     })
 
 
 @app.get("/api/jobs")
 def api_jobs_list():
     has_hm = request.args.get("has_hiring_manager")
-    conn = db.connect()
-    rows = db.query(
-        conn,
-        min_score=request.args.get("min_score", type=int),
-        status=request.args.get("status") or None,
-        q=request.args.get("q") or None,
-        company=request.args.get("company") or None,
-        state=request.args.get("state") or None,
-        source=request.args.get("source") or None,
-        has_hiring_manager={"true": True, "false": False}.get(has_hm),
-        limit=request.args.get("limit", default=300, type=int),
-    )
-    conn.close()
+    with Database() as d:
+        rows = d.jobs.query(
+            min_score=request.args.get("min_score", type=int),
+            status=request.args.get("status") or None,
+            q=request.args.get("q") or None,
+            company=request.args.get("company") or None,
+            state=request.args.get("state") or None,
+            source=request.args.get("source") or None,
+            has_hiring_manager={"true": True, "false": False}.get(has_hm),
+            limit=request.args.get("limit", default=300, type=int),
+        )
     return jsonify([job_to_dict(r) for r in rows])
 
 
 @app.get("/api/jobs/filter-options")
 def api_jobs_filter_options():
-    conn = db.connect()
-    opts = db.filter_options(conn)
-    conn.close()
+    with Database() as d:
+        opts = d.jobs.filter_options()
     return jsonify(opts)
 
 
@@ -112,25 +127,22 @@ def api_job_add():
         "description": body.get("description") or None,
         "posted_at": None,
     }
-    conn = db.connect()
-    job_id = db.upsert(conn, job)
-    if job_id is None:
-        conn.close()
-        return jsonify({"error": "a listing with this URL already exists"}), 409
-    config = cli.load_config()
-    value, reasons = matcher.score(job, config)
-    db.set_score(conn, job_id, value, reasons)
-    conn.commit()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        job_id = d.jobs.upsert(job)
+        if job_id is None:
+            return jsonify({"error": "a listing with this URL already exists"}), 409
+        config = cli.load_config()
+        value, reasons = matcher.score(job, config)
+        d.jobs.set_score(job_id, value, reasons)
+        d.commit()
+        row = d.jobs.get(job_id)
     return jsonify(job_to_dict(row)), 201
 
 
 @app.get("/api/jobs/<int:job_id>")
 def api_job_detail(job_id: int):
-    conn = db.connect()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(job_id)
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
     return jsonify(job_to_dict(row))
@@ -138,10 +150,9 @@ def api_job_detail(job_id: int):
 
 @app.delete("/api/jobs/<int:job_id>")
 def api_job_delete(job_id: int):
-    conn = db.connect()
-    ok = db.delete_job(conn, job_id)
-    conn.commit()
-    conn.close()
+    with Database() as d:
+        ok = d.jobs.delete(job_id)
+        d.commit()
     if not ok:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
     return jsonify({"id": job_id, "deleted": True})
@@ -150,24 +161,21 @@ def api_job_delete(job_id: int):
 @app.patch("/api/jobs/<int:job_id>")
 def api_job_update(job_id: int):
     body = request.get_json(silent=True) or {}
-    conn = db.connect()
-    row = db.get_job(conn, job_id)
-    if not row:
-        conn.close()
-        return jsonify({"error": f"no listing with id {job_id}"}), 404
-    if "hiring_manager" in body:
-        db.set_hiring_manager(conn, job_id, body["hiring_manager"] or None)
-        conn.commit()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(job_id)
+        if not row:
+            return jsonify({"error": f"no listing with id {job_id}"}), 404
+        if "hiring_manager" in body:
+            d.jobs.set_hiring_manager(job_id, body["hiring_manager"] or None)
+            d.commit()
+        row = d.jobs.get(job_id)
     return jsonify(job_to_dict(row))
 
 
 @app.get("/api/jobs/<int:job_id>/find-hm")
 def api_job_findhm(job_id: int):
-    conn = db.connect()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(job_id)
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
     pkg = cli._build_hm_search(job_id, row["title"], row["company"] or "",
@@ -179,13 +187,12 @@ def api_job_findhm(job_id: int):
 def api_job_tailor(job_id: int):
     from . import resume as rz
 
-    conn = db.connect()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(job_id)
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
 
-    profile = json.loads((db.ROOT / "profile.json").read_text(encoding="utf-8"))
+    profile = json.loads((ROOT / "profile.json").read_text(encoding="utf-8"))
     resume_path = profile.get("resume_path", "")
     if not resume_path or not Path(resume_path).exists():
         return jsonify({"error": f"resume not found: {resume_path!r} — "
@@ -203,14 +210,13 @@ def api_job_tailor(job_id: int):
 
 @app.post("/api/jobs/<int:job_id>/apply")
 def api_job_apply(job_id: int):
-    conn = db.connect()
-    row = db.get_job(conn, job_id)
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(job_id)
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
     # Fire-and-forget: opens its own browser window for the human to review
     # and submit. Never blocks the web request — this can run for minutes.
-    subprocess.Popen([PY, "-m", "jobagent", "apply", str(job_id)], cwd=str(db.ROOT))
+    subprocess.Popen([PY, "-m", "jobagent", "apply", str(job_id)], cwd=str(ROOT))
     return jsonify({"id": job_id, "launched": True,
                     "message": "Pre-fill launched in a separate browser window — "
                                "review and submit there."})
@@ -220,44 +226,38 @@ def api_job_apply(job_id: int):
 def api_job_set_status(job_id: int):
     body = request.get_json(silent=True) or {}
     status = body.get("status")
-    if status not in db.STATUSES:
-        return jsonify({"error": f"status must be one of {db.STATUSES}"}), 400
-    conn = db.connect()
-    if not db.get_job(conn, job_id):
-        conn.close()
-        return jsonify({"error": f"no listing with id {job_id}"}), 404
-    db.set_status(conn, job_id, status)
-    conn.commit()
-    conn.close()
+    if status not in STATUSES:
+        return jsonify({"error": f"status must be one of {STATUSES}"}), 400
+    with Database() as d:
+        if not d.jobs.get(job_id):
+            return jsonify({"error": f"no listing with id {job_id}"}), 404
+        d.jobs.set_status(job_id, status)
+        d.commit()
     return jsonify({"id": job_id, "status": status})
 
 
 @app.get("/api/contacts")
 def api_contacts_list():
-    conn = db.connect()
-    rows = db.list_contacts(
-        conn,
-        company=request.args.get("company") or None,
-        channel=request.args.get("channel") or None,
-    )
-    conn.close()
+    with Database() as d:
+        rows = d.contacts.list(
+            company=request.args.get("company") or None,
+            channel=request.args.get("channel") or None,
+        )
     return jsonify([row_to_dict(r) for r in rows])
 
 
 @app.get("/api/contacts/filter-options")
 def api_contacts_filter_options():
-    conn = db.connect()
-    channels = db.contact_channel_options(conn)
-    conn.close()
+    with Database() as d:
+        channels = d.contacts.channel_options()
     return jsonify({"channel": channels})
 
 
 @app.delete("/api/contacts/<int:contact_id>")
 def api_contact_delete(contact_id: int):
-    conn = db.connect()
-    ok = db.delete_contact(conn, contact_id)
-    conn.commit()
-    conn.close()
+    with Database() as d:
+        ok = d.contacts.delete(contact_id)
+        d.commit()
     if not ok:
         return jsonify({"error": f"no contact with id {contact_id}"}), 404
     return jsonify({"id": contact_id, "deleted": True})
@@ -265,9 +265,8 @@ def api_contact_delete(contact_id: int):
 
 @app.get("/api/contacts/<int:contact_id>")
 def api_contact_detail(contact_id: int):
-    conn = db.connect()
-    row = db.get_contact(conn, contact_id)
-    conn.close()
+    with Database() as d:
+        row = d.contacts.get(contact_id)
     if not row:
         return jsonify({"error": f"no contact with id {contact_id}"}), 404
     return jsonify(row_to_dict(row))
@@ -279,41 +278,36 @@ def api_contact_add():
     for required in ("company", "name"):
         if not body.get(required):
             return jsonify({"error": f"{required} is required"}), 400
-    conn = db.connect()
-    cid = db.add_contact(
-        conn,
-        company=body["company"],
-        name=body["name"],
-        title=body.get("title") or None,
-        channel=body.get("channel") or None,
-        contacted_at=body.get("contacted_at") or None,
-        outcome=body.get("outcome") or None,
-        follow_up=body.get("follow_up") or None,
-        listing_id=body.get("listing_id") or None,
-    )
-    conn.commit()
-    row = db.get_contact(conn, cid)
-    conn.close()
+    with Database() as d:
+        cid = d.contacts.add(
+            company=body["company"],
+            name=body["name"],
+            title=body.get("title") or None,
+            channel=body.get("channel") or None,
+            contacted_at=body.get("contacted_at") or None,
+            outcome=body.get("outcome") or None,
+            follow_up=body.get("follow_up") or None,
+            listing_id=body.get("listing_id") or None,
+        )
+        d.commit()
+        row = d.contacts.get(cid)
     return jsonify(row_to_dict(row)), 201
 
 
 @app.patch("/api/contacts/<int:contact_id>")
 def api_contact_update(contact_id: int):
     body = request.get_json(silent=True) or {}
-    conn = db.connect()
-    if not db.get_contact(conn, contact_id):
-        conn.close()
-        return jsonify({"error": f"no contact with id {contact_id}"}), 404
-    fields = {k: body[k] for k in
-              ("outcome", "follow_up", "title", "channel", "name", "company")
-              if body.get(k) is not None}
-    if not fields:
-        conn.close()
-        return jsonify({"error": "no updatable fields provided"}), 400
-    db.update_contact(conn, contact_id, **fields)
-    conn.commit()
-    row = db.get_contact(conn, contact_id)
-    conn.close()
+    with Database() as d:
+        if not d.contacts.get(contact_id):
+            return jsonify({"error": f"no contact with id {contact_id}"}), 404
+        fields = {k: body[k] for k in
+                  ("outcome", "follow_up", "title", "channel", "name", "company")
+                  if body.get(k) is not None}
+        if not fields:
+            return jsonify({"error": "no updatable fields provided"}), 400
+        d.contacts.update(contact_id, **fields)
+        d.commit()
+        row = d.contacts.get(contact_id)
     return jsonify(row_to_dict(row))
 
 
@@ -348,14 +342,12 @@ def api_action_schedule_set():
 
 @app.get("/api/export.csv")
 def api_export_csv():
-    conn = db.connect()
-    rows = db.query(
-        conn,
-        min_score=request.args.get("min_score", type=int),
-        status=request.args.get("status") or None,
-        limit=10_000,
-    )
-    conn.close()
+    with Database() as d:
+        rows = d.jobs.query(
+            min_score=request.args.get("min_score", type=int),
+            status=request.args.get("status") or None,
+            limit=10_000,
+        )
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(["id", "score", "title", "company", "city", "state",

@@ -50,11 +50,10 @@ QUESTION_RULES: list[tuple[tuple[str, ...], str]] = [
 def resolve(target: str) -> Target:
     db_id, label, tailored = None, target, None
     if target.isdigit():
-        from . import db
+        from .db import Database
 
-        conn = db.connect()
-        row = conn.execute("SELECT * FROM jobs WHERE id = ?", (int(target),)).fetchone()
-        conn.close()
+        with Database() as d:
+            row = d.jobs.get(int(target))
         if not row:
             raise SystemExit(f"no listing with id {target}")
         if not row["source"].startswith("ashby:"):

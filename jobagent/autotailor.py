@@ -29,7 +29,7 @@ import time
 import zipfile
 from pathlib import Path
 
-from . import db
+from .db import Database
 
 ROOT = Path(__file__).resolve().parent.parent
 VARIANTS_PATH = ROOT / "variants.json"
@@ -120,57 +120,54 @@ def generate(listing_id: int, force: bool = False) -> Path | None:
     if not base.exists():
         raise SystemExit(f"base resume not found: {base}")
 
-    conn = db.connect()
-    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (listing_id,)).fetchone()
-    if not row:
-        raise SystemExit(f"no listing with id {listing_id}")
+    with Database() as d:
+        row = d.jobs.get(listing_id)
+        if not row:
+            raise SystemExit(f"no listing with id {listing_id}")
 
-    TAILORED_DIR.mkdir(parents=True, exist_ok=True)
-    company = re.sub(r"[^\w-]+", "_", (row["company"] or "unknown")).strip("_")
-    out = TAILORED_DIR / f"{listing_id}_{company}.docx"
-    if out.exists() and not force:
-        print(f"[{listing_id}] already tailored: {out.name} (use --force to redo)")
-        conn.close()
-        return out
+        TAILORED_DIR.mkdir(parents=True, exist_ok=True)
+        company = re.sub(r"[^\w-]+", "_", (row["company"] or "unknown")).strip("_")
+        out = TAILORED_DIR / f"{listing_id}_{company}.docx"
+        if out.exists() and not force:
+            print(f"[{listing_id}] already tailored: {out.name} (use --force to redo)")
+            return out
 
-    jd = _fetch_jd(row)
-    if len(jd) < 200:
-        print(f"[{listing_id}] no usable JD — using base resume as-is")
-        shutil.copy(base, out)
-    else:
-        domain, hits = classify(jd, variants)
-        spec = variants["domains"][domain]
-        # Edit a copy of the base: reorder competencies, maybe swap summary.
-        shutil.copy(base, out)
-        with zipfile.ZipFile(out) as zf:
-            names = zf.namelist()
-            contents = {n: zf.read(n) for n in names}
-        xml = contents["word/document.xml"].decode("utf-8")
-        xml = _reorder_competencies(
-            xml, spec.get("competency_order", []), variants["competency_labels"]
-        )
-        if spec.get("summary"):
-            xml = _swap_summary(xml, spec["summary"],
-                                variants.get("base_summary_first_sentence", ""))
-        contents["word/document.xml"] = xml.encode("utf-8")
-        with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-            for n in names:
-                zf.writestr(n, contents[n])
-        print(f"[{listing_id}] domain={domain} ({hits} term hits) -> {out.name}")
+        jd = _fetch_jd(row)
+        if len(jd) < 200:
+            print(f"[{listing_id}] no usable JD — using base resume as-is")
+            shutil.copy(base, out)
+        else:
+            domain, hits = classify(jd, variants)
+            spec = variants["domains"][domain]
+            # Edit a copy of the base: reorder competencies, maybe swap summary.
+            shutil.copy(base, out)
+            with zipfile.ZipFile(out) as zf:
+                names = zf.namelist()
+                contents = {n: zf.read(n) for n in names}
+            xml = contents["word/document.xml"].decode("utf-8")
+            xml = _reorder_competencies(
+                xml, spec.get("competency_order", []), variants["competency_labels"]
+            )
+            if spec.get("summary"):
+                xml = _swap_summary(xml, spec["summary"],
+                                    variants.get("base_summary_first_sentence", ""))
+            contents["word/document.xml"] = xml.encode("utf-8")
+            with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
+                for n in names:
+                    zf.writestr(n, contents[n])
+            print(f"[{listing_id}] domain={domain} ({hits} term hits) -> {out.name}")
 
-    conn.execute("UPDATE jobs SET resume_path = ? WHERE id = ?", (str(out), listing_id))
-    conn.commit()
-    conn.close()
+        d.jobs.set_resume_path(listing_id, str(out))
+        d.commit()
     return out
 
 
 def batch(min_score: int) -> None:
-    conn = db.connect()
-    rows = conn.execute(
-        "SELECT id FROM jobs WHERE score >= ? AND status IN ('new', 'shortlist')",
-        (min_score,),
-    ).fetchall()
-    conn.close()
+    with Database() as d:
+        rows = d.conn.execute(
+            "SELECT id FROM jobs WHERE score >= ? AND status IN ('new', 'shortlist')",
+            (min_score,),
+        ).fetchall()
     print(f"tailoring {len(rows)} listings (score >= {min_score})")
     for r in rows:
         generate(r["id"])
@@ -180,26 +177,25 @@ def purge_old() -> int:
     """Delete tailored resumes older than RETENTION_DAYS, keeping applied ones."""
     if not TAILORED_DIR.exists():
         return 0
-    conn = db.connect()
-    applied = {
-        r["resume_path"]
-        for r in conn.execute(
-            "SELECT resume_path FROM jobs WHERE status = 'applied' AND resume_path IS NOT NULL"
-        )
-    }
-    cutoff = time.time() - RETENTION_DAYS * 86400
-    removed = 0
-    for f in TAILORED_DIR.glob("*.docx"):
-        if str(f) in applied:
-            continue  # record of what was actually sent — keep
-        if f.stat().st_mtime < cutoff:
-            f.unlink()
-            conn.execute(
-                "UPDATE jobs SET resume_path = NULL WHERE resume_path = ?", (str(f),)
+    with Database() as d:
+        applied = {
+            r["resume_path"]
+            for r in d.conn.execute(
+                "SELECT resume_path FROM jobs WHERE status = 'applied' AND resume_path IS NOT NULL"
             )
-            removed += 1
-    conn.commit()
-    conn.close()
+        }
+        cutoff = time.time() - RETENTION_DAYS * 86400
+        removed = 0
+        for f in TAILORED_DIR.glob("*.docx"):
+            if str(f) in applied:
+                continue  # record of what was actually sent — keep
+            if f.stat().st_mtime < cutoff:
+                f.unlink()
+                d.conn.execute(
+                    "UPDATE jobs SET resume_path = NULL WHERE resume_path = ?", (str(f),)
+                )
+                removed += 1
+        d.commit()
     return removed
 
 

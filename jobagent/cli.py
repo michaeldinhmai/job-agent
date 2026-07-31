@@ -11,10 +11,11 @@ import textwrap
 import webbrowser
 from pathlib import Path
 
-from . import db, matcher, sources
+from . import matcher, sources
 from . import locations as geo
+from .db import Database, STATUSES
 
-CONFIG_PATH = db.ROOT / "config.json"
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
 
 
 def load_config(path: Path = CONFIG_PATH) -> dict:
@@ -23,7 +24,7 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _run_ingest(conn, config: dict, only: str | None = None):
+def _run_ingest(d: Database, config: dict, only: str | None = None):
     """Fetch + score all sources. Returns (new, seen, new_matches)."""
     floor = config.get("min_score", 0)
     new = seen = 0
@@ -35,14 +36,14 @@ def _run_ingest(conn, config: dict, only: str | None = None):
             continue
         added = 0
         for job in jobs:
-            job_id = db.upsert(conn, job)
+            job_id = d.jobs.upsert(job)
             if job_id is not None:
                 value, reasons = matcher.score(job, config)
-                db.set_score(conn, job_id, value, reasons)
+                d.jobs.set_score(job_id, value, reasons)
                 added += 1
                 if value >= floor:
                     new_matches.append({**job, "id": job_id, "score": value})
-        conn.commit()
+        d.commit()
         new, seen = new + added, seen + len(jobs)
         print(f"  + {label}: {added} new / {len(jobs)} listings")
 
@@ -52,10 +53,9 @@ def _run_ingest(conn, config: dict, only: str | None = None):
 
 def cmd_ingest(args) -> None:
     config = load_config()
-    conn = db.connect()
-    new, seen, _ = _run_ingest(conn, config, only=args.source)
-    print(f"\n{new} new listings ({seen} seen). Status: {db.counts(conn)}")
-    conn.close()
+    with Database() as d:
+        new, seen, _ = _run_ingest(d, config, only=args.source)
+        print(f"\n{new} new listings ({seen} seen). Status: {d.jobs.counts()}")
 
 
 def cmd_digest(args) -> None:
@@ -63,11 +63,11 @@ def cmd_digest(args) -> None:
     from datetime import date
 
     from . import autotailor
+    from .db import ROOT
 
     config = load_config()
-    conn = db.connect()
-    new, seen, matches = _run_ingest(conn, config)
-    conn.close()
+    with Database() as d:
+        new, seen, matches = _run_ingest(d, config)
 
     # Auto-tailor a resume for each new match, and enforce 30-day retention.
     for j in matches:
@@ -79,8 +79,7 @@ def cmd_digest(args) -> None:
     if purged:
         print(f"purged {purged} tailored resume(s) past {autotailor.RETENTION_DAYS} days")
 
-    conn = db.connect()
-    reports = db.ROOT / "reports"
+    reports = ROOT / "reports"
     reports.mkdir(exist_ok=True)
     out = reports / f"digest-{date.today().isoformat()}.md"
 
@@ -102,21 +101,20 @@ def cmd_digest(args) -> None:
         ]
     out.write_text("\n".join(lines), encoding="utf-8")
     print(f"\n{len(matches)} new matches -> {out}")
-    conn.close()
 
 
 def cmd_rescore(args) -> None:
-    conn = db.connect()
-    n = matcher.rescore_all(conn, load_config())
+    with Database() as d:
+        n = matcher.rescore_all(d.jobs, load_config())
+        d.commit()
     print(f"rescored {n} listings")
-    conn.close()
 
 
 def cmd_list(args) -> None:
     config = load_config()
-    conn = db.connect()
     floor = args.min_score if args.min_score is not None else config.get("min_score", 0)
-    rows = db.query(conn, min_score=floor, status=args.status, limit=args.limit)
+    with Database() as d:
+        rows = d.jobs.query(min_score=floor, status=args.status, limit=args.limit)
 
     if not rows:
         print("nothing matched — try a lower --min-score, or run ingest first")
@@ -134,12 +132,11 @@ def cmd_list(args) -> None:
         print(f"        {row['url']}")
         print(f"        why: {row['reasons']}\n")
     print(f"{len(rows)} shown (match >= {matcher.to_percent(floor)}/100)")
-    conn.close()
 
 
 def cmd_show(args) -> None:
-    conn = db.connect()
-    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (args.id,)).fetchone()
+    with Database() as d:
+        row = d.jobs.get(args.id)
     if not row:
         sys.exit(f"no listing with id {args.id}")
     print(f"{'title':>14}: {row['title']}")
@@ -154,54 +151,46 @@ def cmd_show(args) -> None:
     pct = matcher.to_percent(row["score"])
     print(f"{'match':>14}: {pct}/100 (raw {row['score']})")
     print("\n" + textwrap.fill(row["description"] or "", 88))
-    conn.close()
 
 
 def cmd_set_hm(args) -> None:
-    conn = db.connect()
-    if not conn.execute("SELECT 1 FROM jobs WHERE id = ?", (args.id,)).fetchone():
-        conn.close()
-        sys.exit(f"no listing with id {args.id}")
-    name = args.name or None
-    db.set_hiring_manager(conn, args.id, name)
-    conn.commit()
+    with Database() as d:
+        if not d.jobs.get(args.id):
+            sys.exit(f"no listing with id {args.id}")
+        name = args.name or None
+        d.jobs.set_hiring_manager(args.id, name)
+        d.commit()
     print(f"{args.id} -> hiring_manager: {name or '(cleared)'}")
-    conn.close()
 
 
 def cmd_mark(args) -> None:
-    conn = db.connect()
-    db.set_status(conn, args.id, args.status)
-    conn.commit()
+    with Database() as d:
+        d.jobs.set_status(args.id, args.status)
+        d.commit()
     print(f"{args.id} -> {args.status}")
-    conn.close()
 
 
 def cmd_delete(args) -> None:
-    conn = db.connect()
-    row = db.get_job(conn, args.id)
-    if not row:
-        conn.close()
-        sys.exit(f"no listing with id {args.id}")
-    if not args.yes:
-        confirm = input(f"Delete [{args.id}] {row['title']} @ {row['company']}? [y/N] ")
-        if confirm.strip().lower() != "y":
-            print("cancelled")
-            conn.close()
-            return
-    db.delete_job(conn, args.id)
-    conn.commit()
+    with Database() as d:
+        row = d.jobs.get(args.id)
+        if not row:
+            sys.exit(f"no listing with id {args.id}")
+        if not args.yes:
+            confirm = input(f"Delete [{args.id}] {row['title']} @ {row['company']}? [y/N] ")
+            if confirm.strip().lower() != "y":
+                print("cancelled")
+                return
+        d.jobs.delete(args.id)
+        d.commit()
     print(f"{args.id} deleted")
-    conn.close()
 
 
 def cmd_open(args) -> None:
-    conn = db.connect()
-    row = conn.execute("SELECT url FROM jobs WHERE id = ?", (args.id,)).fetchone()
+    with Database() as d:
+        row = d.jobs.get(args.id)
     if not row:
         sys.exit(f"no listing with id {args.id}")
     webbrowser.open(row["url"])
-    conn.close()
 
 
 ADAPTER_BY_SOURCE = {"greenhouse": "greenhouse", "ashby": "ashby"}
@@ -209,10 +198,10 @@ ADAPTER_BY_DOMAIN = {"greenhouse.io": "greenhouse", "ashbyhq.com": "ashby",
                      "icims.com": "icims", "myworkdayjobs.com": "workday"}
 
 
-def _adapter_name_for(target: str, conn) -> str:
-    """Which ATS adapter handles this DB id or URL?"""
+def _adapter_name_for(target: str, jobs) -> str:
+    """Which ATS adapter handles this DB id or URL? `jobs` is a JobRepository."""
     if target.isdigit():
-        row = conn.execute("SELECT source FROM jobs WHERE id = ?", (int(target),)).fetchone()
+        row = jobs.get(int(target))
         if not row:
             sys.exit(f"no listing with id {target}")
         prefix = row["source"].split(":", 1)[0]
@@ -236,11 +225,10 @@ def cmd_apply(args) -> None:
 
     from . import applyflow
 
-    conn = db.connect()
-    groups: dict[str, list[str]] = {}
-    for t in args.targets:
-        groups.setdefault(_adapter_name_for(t, conn), []).append(t)
-    conn.close()
+    with Database() as d:
+        groups: dict[str, list[str]] = {}
+        for t in args.targets:
+            groups.setdefault(_adapter_name_for(t, d.jobs), []).append(t)
 
     for name, targets in groups.items():
         if len(groups) > 1:
@@ -292,13 +280,14 @@ def cmd_schedule(args) -> None:
 def cmd_tailor(args) -> None:
     """Compare your resume against one listing's job description."""
     from . import resume as rz
+    from .db import ROOT
 
-    conn = db.connect()
-    row = conn.execute("SELECT * FROM jobs WHERE id = ?", (args.id,)).fetchone()
+    with Database() as d:
+        row = d.jobs.get(args.id)
     if not row:
         sys.exit(f"no listing with id {args.id}")
 
-    profile = json.loads((db.ROOT / "profile.json").read_text(encoding="utf-8"))
+    profile = json.loads((ROOT / "profile.json").read_text(encoding="utf-8"))
     resume_path = args.resume or profile.get("resume_path", "")
     if not resume_path or not Path(resume_path).exists():
         sys.exit(f"resume not found: {resume_path!r} — set resume_path in profile.json")
@@ -334,14 +323,13 @@ def cmd_tailor(args) -> None:
     print("  Anything you can't honestly claim, leave out — it's interview prep, not padding.\n")
     for term, w in result["missing"][:20]:
         print(f"  - {term}")
-    conn.close()
 
 
 def cmd_export(args) -> None:
     config = load_config()
-    conn = db.connect()
     floor = args.min_score if args.min_score is not None else config.get("min_score", 0)
-    rows = db.query(conn, min_score=floor, status=args.status, limit=10_000)
+    with Database() as d:
+        rows = d.jobs.query(min_score=floor, status=args.status, limit=10_000)
     out = Path(args.out)
     with out.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
@@ -350,7 +338,6 @@ def cmd_export(args) -> None:
             writer.writerow([r["id"], r["score"], r["title"], r["company"],
                              r["location"], r["status"], r["url"]])
     print(f"wrote {len(rows)} rows to {out}")
-    conn.close()
 
 
 ROLE_FAMILIES = [
@@ -422,11 +409,8 @@ def _build_hm_search(job_id: int, title: str, company: str, description: str) ->
 
 
 def cmd_findhm(args) -> None:
-    conn = db.connect()
-    row = conn.execute(
-        "SELECT title, company, description FROM jobs WHERE id = ?", (args.id,)
-    ).fetchone()
-    conn.close()
+    with Database() as d:
+        row = d.jobs.get(args.id)
     if not row:
         sys.exit(f"no listing with id {args.id}")
 
@@ -464,21 +448,19 @@ def cmd_findhm(args) -> None:
 
 
 def cmd_contact_add(args) -> None:
-    conn = db.connect()
-    cid = db.add_contact(
-        conn, company=args.company, name=args.name, title=args.title,
-        channel=args.channel, contacted_at=args.date, outcome=args.outcome,
-        follow_up=args.follow_up, listing_id=args.listing,
-    )
-    conn.commit()
+    with Database() as d:
+        cid = d.contacts.add(
+            company=args.company, name=args.name, title=args.title,
+            channel=args.channel, contacted_at=args.date, outcome=args.outcome,
+            follow_up=args.follow_up, listing_id=args.listing,
+        )
+        d.commit()
     print(f"logged contact {cid}: {args.name} @ {args.company}")
-    conn.close()
 
 
 def cmd_contact_list(args) -> None:
-    conn = db.connect()
-    rows = db.list_contacts(conn, company=args.company)
-    conn.close()
+    with Database() as d:
+        rows = d.contacts.list(company=args.company, channel=args.channel)
     if not rows:
         print("no contacts logged yet — see: python -m jobagent contact add --help")
         return
@@ -498,9 +480,8 @@ def cmd_contact_list(args) -> None:
 
 
 def cmd_contact_show(args) -> None:
-    conn = db.connect()
-    r = db.get_contact(conn, args.id)
-    conn.close()
+    with Database() as d:
+        r = d.contacts.get(args.id)
     if not r:
         sys.exit(f"no contact with id {args.id}")
     for field in ("company", "name", "title", "channel", "contacted_at", "listing_id", "created_at"):
@@ -512,40 +493,34 @@ def cmd_contact_show(args) -> None:
 
 
 def cmd_contact_update(args) -> None:
-    conn = db.connect()
-    if not db.get_contact(conn, args.id):
-        conn.close()
-        sys.exit(f"no contact with id {args.id}")
-    fields = {k: v for k, v in {
-        "outcome": args.outcome, "follow_up": args.follow_up,
-        "title": args.title, "channel": args.channel,
-    }.items() if v is not None}
-    if not fields:
-        conn.close()
-        sys.exit("nothing to update — pass at least one of "
-                 "--outcome/--follow-up/--title/--channel")
-    db.update_contact(conn, args.id, **fields)
-    conn.commit()
+    with Database() as d:
+        if not d.contacts.get(args.id):
+            sys.exit(f"no contact with id {args.id}")
+        fields = {k: v for k, v in {
+            "outcome": args.outcome, "follow_up": args.follow_up,
+            "title": args.title, "channel": args.channel,
+        }.items() if v is not None}
+        if not fields:
+            sys.exit("nothing to update — pass at least one of "
+                     "--outcome/--follow-up/--title/--channel")
+        d.contacts.update(args.id, **fields)
+        d.commit()
     print(f"updated contact {args.id}: {', '.join(fields)}")
-    conn.close()
 
 
 def cmd_contact_delete(args) -> None:
-    conn = db.connect()
-    row = db.get_contact(conn, args.id)
-    if not row:
-        conn.close()
-        sys.exit(f"no contact with id {args.id}")
-    if not args.yes:
-        confirm = input(f"Delete contact [{args.id}] {row['name']} @ {row['company']}? [y/N] ")
-        if confirm.strip().lower() != "y":
-            print("cancelled")
-            conn.close()
-            return
-    db.delete_contact(conn, args.id)
-    conn.commit()
+    with Database() as d:
+        row = d.contacts.get(args.id)
+        if not row:
+            sys.exit(f"no contact with id {args.id}")
+        if not args.yes:
+            confirm = input(f"Delete contact [{args.id}] {row['name']} @ {row['company']}? [y/N] ")
+            if confirm.strip().lower() != "y":
+                print("cancelled")
+                return
+        d.contacts.delete(args.id)
+        d.commit()
     print(f"contact {args.id} deleted")
-    conn.close()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -568,7 +543,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("list", help="show ranked matches")
     p.add_argument("--min-score", type=int)
-    p.add_argument("--status", choices=db.STATUSES)
+    p.add_argument("--status", choices=STATUSES)
     p.add_argument("--limit", type=int, default=25)
     p.set_defaults(func=cmd_list)
 
@@ -583,7 +558,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("mark", help="set status on a listing")
     p.add_argument("id", type=int)
-    p.add_argument("status", choices=db.STATUSES)
+    p.add_argument("status", choices=STATUSES)
     p.set_defaults(func=cmd_mark)
 
     p = sub.add_parser("delete", help="permanently delete a listing")
@@ -633,6 +608,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     cl = contact_sub.add_parser("list", help="show all logged contacts")
     cl.add_argument("--company", help="filter by company (substring match)")
+    cl.add_argument("--channel", help="filter by channel (exact match)")
     cl.set_defaults(func=cmd_contact_list)
 
     cs = contact_sub.add_parser("show", help="full detail for one contact")
@@ -655,7 +631,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("export", help="dump matches to CSV")
     p.add_argument("--out", default="jobs.csv")
     p.add_argument("--min-score", type=int)
-    p.add_argument("--status", choices=db.STATUSES)
+    p.add_argument("--status", choices=STATUSES)
     p.set_defaults(func=cmd_export)
 
     return parser

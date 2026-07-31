@@ -116,13 +116,13 @@ def score(job: dict, config: dict) -> tuple[int, str]:
     return total, ", ".join(reasons) or "no signals"
 
 
-def rescore_all(conn, config: dict) -> int:
-    """Re-run scoring over every stored row. Returns rows touched."""
-    from . import db
+def rescore_all(jobs, config: dict) -> int:
+    """Re-run scoring over every stored row. Returns rows touched.
 
-    rows = conn.execute("SELECT * FROM jobs").fetchall()
+    `jobs` is a JobRepository (its `.conn` is used for the full-table scan;
+    no `query()` filters apply here since this rescans everything)."""
+    rows = jobs.conn.execute("SELECT * FROM jobs").fetchall()
     for row in rows:
         value, reasons = score(dict(row), config)
-        db.set_score(conn, row["id"], value, reasons)
-    conn.commit()
+        jobs.set_score(row["id"], value, reasons)
     return len(rows)
