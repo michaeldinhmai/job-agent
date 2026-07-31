@@ -20,6 +20,7 @@ from flask import Flask, Response, jsonify, request
 
 from . import cli, matcher
 from . import locations as geo
+from . import salary as sal
 from .db import ROOT, STATUSES, Database
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -79,6 +80,7 @@ def job_to_dict(row) -> dict:
     d = row_to_dict(row)
     d["score_pct"] = matcher.to_percent(row["score"])
     d["remote_label"] = geo.remote_label(row["city"], row["state"], row["country"])
+    d["salary_label"] = sal.format_salary(row["salary_min"], row["salary_max"])
     return d
 
 
@@ -376,10 +378,11 @@ def api_export_csv():
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(["id", "score", "title", "company", "city", "state",
-                     "country", "status", "hiring_manager", "url"])
+                     "country", "salary_min", "salary_max", "status", "hiring_manager", "url"])
     for r in rows:
         writer.writerow([r["id"], r["score"], r["title"], r["company"], r["city"],
-                         r["state"], r["country"], r["status"], r["hiring_manager"], r["url"]])
+                         r["state"], r["country"], r["salary_min"], r["salary_max"],
+                         r["status"], r["hiring_manager"], r["url"]])
     return Response(buf.getvalue(), mimetype="text/csv", headers={
         "Content-Disposition": "attachment; filename=jobagent_export.csv"
     })

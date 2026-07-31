@@ -101,6 +101,7 @@ async function loadJobs() {
       <td class="truncate" title="${escapeHtml(j.title)}">${escapeHtml(j.title)}</td>
       <td>${escapeHtml(j.company)}</td>
       <td class="truncate" title="${escapeHtml(j.location)}">${escapeHtml(where)}</td>
+      <td>${escapeHtml(j.salary_label) || "—"}</td>
       <td>
         <select class="status-select" data-id="${j.id}">
           ${STATUSES.map(s => `<option value="${s}" ${s === j.status ? "selected" : ""}>${s}</option>`).join("")}
@@ -111,7 +112,7 @@ async function loadJobs() {
       <td><a href="${safeHref(j.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">open ↗</a></td>
     </tr>
   `;
-  }).join("") || `<tr><td colspan="8">No matches for this filter.</td></tr>`;
+  }).join("") || `<tr><td colspan="9">No matches for this filter.</td></tr>`;
 
   tbody.querySelectorAll("tr[data-id]").forEach(tr => {
     tr.addEventListener("click", e => {
@@ -146,6 +147,7 @@ async function showJobDetail(id) {
     <div class="field"><label>Match % / status / source</label>
       <div>${j.score_pct}/100 (raw ${j.score}) · <span class="badge ${j.status}">${j.status}</span> · ${escapeHtml(j.source)}</div>
     </div>
+    <div class="field"><label>Salary (parsed from JD)</label><div>${escapeHtml(j.salary_label) || "not disclosed / not found"}</div></div>
     <div class="field"><label>Why it matched</label><div class="reasons">${escapeHtml(j.reasons)}</div></div>
     <div class="field"><label>Hiring manager</label>
       <input id="edit-hm" value="${escapeHtml(j.hiring_manager)}" placeholder="Name, once you find one">

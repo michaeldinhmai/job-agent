@@ -13,6 +13,7 @@ from pathlib import Path
 
 from . import matcher, sources
 from . import locations as geo
+from . import salary as sal
 from .db import Database, STATUSES
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
@@ -127,8 +128,10 @@ def cmd_list(args) -> None:
         where = (", ".join(p for p in (row["city"], row["state"]) if p)
                  or geo.remote_label(row["city"], row["state"], row["country"])
                  or row["location"] or "location n/a")
+        pay = sal.format_salary(row["salary_min"], row["salary_max"])
         print(f"[{row['id']:>4}] match {pct:>3}/100  {row['title']}  —  {company}")
         print(f"        {where}  |  {row['status']}"
+              + (f"  |  {pay}" if pay else "")
               + (f"  |  HM: {row['hiring_manager']}" if row["hiring_manager"] else ""))
         print(f"        {row['url']}")
         print(f"        why: {row['reasons']}\n")
@@ -146,6 +149,7 @@ def cmd_show(args) -> None:
     print(f"{'city':>14}: {row['city'] or '—'}")
     print(f"{'state':>14}: {row['state'] or '—'}")
     print(f"{'country':>14}: {row['country'] or '—'}")
+    print(f"{'salary':>14}: {sal.format_salary(row['salary_min'], row['salary_max']) or '—'}")
     for field in ("source", "reasons", "status", "hiring_manager", "posted_at", "url"):
         value = row[field]
         print(f"{field:>14}: {value if value is not None else '—'}")

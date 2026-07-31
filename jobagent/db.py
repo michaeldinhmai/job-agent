@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import locations as geo
+from . import salary as sal
 
 ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = ROOT / "jobs.db"
@@ -79,15 +80,19 @@ class JobRepository:
         something already applied to or ignored.
         """
         city, state, country = geo.parse_us_location(job.get("location"))
+        salary_min, salary_max = sal.parse_salary(job.get("description"))
         cur = self.conn.execute(
             """
             INSERT INTO jobs (source, company, title, location, url,
-                              description, posted_at, first_seen, city, state, country)
+                              description, posted_at, first_seen, city, state, country,
+                              salary_min, salary_max)
             VALUES (:source, :company, :title, :location, :url,
-                    :description, :posted_at, :first_seen, :city, :state, :country)
+                    :description, :posted_at, :first_seen, :city, :state, :country,
+                    :salary_min, :salary_max)
             ON CONFLICT(url) DO NOTHING
             """,
-            {**job, "first_seen": now(), "city": city, "state": state, "country": country},
+            {**job, "first_seen": now(), "city": city, "state": state, "country": country,
+             "salary_min": salary_min, "salary_max": salary_max},
         )
         return cur.lastrowid if cur.rowcount > 0 else None
 
@@ -103,6 +108,22 @@ class JobRepository:
             self.conn.execute(
                 "UPDATE jobs SET city = ?, state = ?, country = ? WHERE id = ?",
                 (city, state, country, row["id"]),
+            )
+        self.conn.commit()
+        return len(rows)
+
+    def backfill_salaries(self) -> int:
+        """(Re-)parse salary_min/salary_max from the description for every row.
+
+        Safe to re-run: overwrites salary_min/salary_max from the current
+        parser, never touches the raw `description` field itself.
+        """
+        rows = self.conn.execute("SELECT id, description FROM jobs").fetchall()
+        for row in rows:
+            salary_min, salary_max = sal.parse_salary(row["description"])
+            self.conn.execute(
+                "UPDATE jobs SET salary_min = ?, salary_max = ? WHERE id = ?",
+                (salary_min, salary_max, row["id"]),
             )
         self.conn.commit()
         return len(rows)
@@ -294,6 +315,12 @@ class Database:
             self.conn.execute("ALTER TABLE jobs ADD COLUMN country TEXT")
             self.conn.commit()
             JobRepository(self.conn).backfill_locations()
+        # Migration: salary range, parsed from the JD text (2026-07-31).
+        if "salary_min" not in cols:
+            self.conn.execute("ALTER TABLE jobs ADD COLUMN salary_min INTEGER")
+            self.conn.execute("ALTER TABLE jobs ADD COLUMN salary_max INTEGER")
+            self.conn.commit()
+            JobRepository(self.conn).backfill_salaries()
 
     def commit(self) -> None:
         self.conn.commit()
