@@ -8,3 +8,6 @@ auth/
 resume/
 logs/
 reports/
+
+# Personal contact info (name, email, phone, LinkedIn) — never push this.
+profile.json
