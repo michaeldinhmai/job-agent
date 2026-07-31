@@ -11,3 +11,6 @@ reports/
 
 # Personal contact info (name, email, phone, LinkedIn) — never push this.
 profile.json
+
+# Machine-specific local tooling config (e.g. preview-server launch configs).
+.claude/

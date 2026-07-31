@@ -253,11 +253,13 @@ def cmd_schedule(args) -> None:
         )
 
     if args.state == "status":
+        from .db import ROOT
+
         result = schtasks("/query", "/fo", "list", "/v")
         if result.returncode != 0:
             print("scheduled task not found — recreate it with:\n"
                   '  schtasks /create /f /tn "job-agent daily digest" '
-                  '/tr "C:\\Users\\dinht\\job-agent\\digest.bat" /sc daily /st 08:00')
+                  f'/tr "{ROOT / "digest.bat"}" /sc daily /st 08:00')
             return
         wanted = ("Status:", "Next Run Time:", "Last Run Time:", "Last Result:",
                   "Scheduled Task State:")
