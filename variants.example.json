@@ -1,0 +1,37 @@
+{
+  "_comment": "Approved building blocks for automatic resume tailoring — copy this file to variants.json and fill it in with YOUR real resume content. The auto-tailor module (jobagent/autotailor.py) only ever assembles content from this file; it never invents claims. Every sentence you put in here should be true and something you're comfortable standing behind in an interview. summary=null means 'keep the base resume's summary as written'.",
+
+  "base_resume": "resume\\Your_Name_Resume.docx",
+  "_base_resume_note": "Path to your base .docx, relative to the repo root. Put your actual resume file in resume/ — that whole folder is gitignored.",
+
+  "competency_labels": [
+    "Example Competency Category One",
+    "Example Competency Category Two",
+    "Example Competency Category Three"
+  ],
+  "_competency_labels_note": "These must exactly match the bold category labels in your base resume's CORE COMPETENCIES section (e.g. 'Cloud & Data Engineering: AWS, Azure, ...') — the autotailor reorders these lines by matching this exact text against the .docx XML.",
+
+  "domains": {
+    "example-domain-one": {
+      "terms": ["example-jd-keyword-one", "example-jd-keyword-two"],
+      "competency_order": [
+        "Example Competency Category One",
+        "Example Competency Category Two",
+        "Example Competency Category Three"
+      ],
+      "summary": null
+    },
+    "example-domain-two": {
+      "terms": ["example-jd-keyword-three"],
+      "competency_order": [
+        "Example Competency Category Two",
+        "Example Competency Category One",
+        "Example Competency Category Three"
+      ],
+      "summary": null
+    }
+  },
+  "_domains_note": "Each domain represents a JD 'flavor' (e.g. security-focused, data-focused, AI-focused) your target roles might lean toward. autotailor.py classifies each JD by counting which domain's terms appear most, then reorders your competency lines to lead with what's most relevant to that specific posting.",
+
+  "_summary_note": "To enable per-domain summary swaps, write the sentence you want under 'summary' for a domain — it replaces the first sentence of your base resume's summary paragraph. Nothing goes in here without you approving the exact wording first."
+}

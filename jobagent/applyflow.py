@@ -41,6 +41,9 @@ class Target:
 
 
 def load_profile() -> dict:
+    if not PROFILE_PATH.exists():
+        raise SystemExit(f"missing {PROFILE_PATH} — copy profile.example.json "
+                         "to profile.json and fill in your own info")
     return json.loads(PROFILE_PATH.read_text(encoding="utf-8"))
 
 

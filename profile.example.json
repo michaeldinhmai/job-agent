@@ -1,0 +1,28 @@
+{
+  "_comment": "Your standard application answers — copy this file to profile.json and fill in your real info. profile.json is gitignored; it never gets pushed. No passwords here, ever — login for session-based ATS adapters (Workday/iCIMS) happens in a real browser, and only the session cookie is saved to auth/ (also gitignored).",
+
+  "resume_path": "C:\\path\\to\\your\\resume\\Your_Name_Resume.docx",
+
+  "name": {"first": "Your", "last": "Name"},
+  "email": "you@example.com",
+  "phone": {"device_type": "Mobile", "country_code": "+1", "number": "555-555-5555"},
+  "address": {
+    "line1": "",
+    "city": "",
+    "state": "",
+    "postal_code": "",
+    "country": "United States of America"
+  },
+
+  "linkedin": "https://www.linkedin.com/in/your-handle",
+
+  "how_did_you_hear": "Company Website",
+  "previously_worked_here": false,
+
+  "questions": {
+    "work_authorization_us": "Yes",
+    "require_sponsorship": "No",
+    "willing_to_relocate": "No",
+    "remote_ok": true
+  }
+}

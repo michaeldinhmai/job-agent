@@ -20,7 +20,8 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
 
 def load_config(path: Path = CONFIG_PATH) -> dict:
     if not path.exists():
-        sys.exit(f"missing {path} — copy config.json from the repo and edit it")
+        sys.exit(f"missing {path} — copy config.example.json to config.json "
+                 "and edit it for your own search")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -289,7 +290,15 @@ def cmd_tailor(args) -> None:
     if not row:
         sys.exit(f"no listing with id {args.id}")
 
-    profile = json.loads((ROOT / "profile.json").read_text(encoding="utf-8"))
+    config = load_config()
+    vocab = config.get("resume_analysis", {}).get("vocab")
+    vocab = set(vocab) if vocab else None
+
+    profile_path = ROOT / "profile.json"
+    if not profile_path.exists():
+        sys.exit(f"missing {profile_path} — copy profile.example.json to "
+                 "profile.json and fill in your own info")
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
     resume_path = args.resume or profile.get("resume_path", "")
     if not resume_path or not Path(resume_path).exists():
         sys.exit(f"resume not found: {resume_path!r} — set resume_path in profile.json")
@@ -311,7 +320,7 @@ def cmd_tailor(args) -> None:
     if len(jd) < 200:
         sys.exit("no usable job description for this listing")
 
-    result = rz.analyze(resume_text, jd)
+    result = rz.analyze(resume_text, jd, vocab=vocab)
     print(f"{row['title']}  —  {row['company']}\n{row['url']}\n")
     print(f"JD emphasises {result['jd_terms']} distinct terms; "
           f"your resume already shows {result['coverage']:.0%} of them.\n")
@@ -342,17 +351,21 @@ def cmd_export(args) -> None:
     print(f"wrote {len(rows)} rows to {out}")
 
 
-ROLE_FAMILIES = [
-    ("TAM", {
+# Packaged default — used whenever config.json has no "role_families" section.
+# This is one example career-track taxonomy (presales/technical-account-management);
+# it's meant to be overridden in config.json for whatever field you're job-hunting
+# in. See config.example.json for the schema.
+DEFAULT_ROLE_FAMILIES = [
+    {"name": "TAM", "terms": [
         "technical account manager", "customer success engineer",
         "technical customer success manager", "client success engineer",
         "enterprise technical account manager", "support account manager",
         "professional services engineer", "post-sales engineer",
         "postsales engineer", "customer success architect",
         "technical relationship manager",
-    }, ["Technical Account Management", "Customer Success",
-        "Customer Success Engineering"]),
-    ("SE", {
+    ], "search_keywords": ["Technical Account Management", "Customer Success",
+        "Customer Success Engineering"]},
+    {"name": "SE", "terms": [
         "sales engineer", "sales engineering", "solutions engineer",
         "solution engineer", "solutions architect", "solution architect",
         "solutions consultant", "solution consultant", "presales",
@@ -360,15 +373,17 @@ ROLE_FAMILIES = [
         "field engineer", "forward deployed engineer", "partner engineer",
         "partner solutions", "application engineer", "deployment engineer",
         "developer relations engineer",
-    }, ["Sales Engineering", "Solutions Engineering", "Presales"]),
-    ("Bridge", {
+    ], "search_keywords": ["Sales Engineering", "Solutions Engineering", "Presales"]},
+    {"name": "Bridge", "terms": [
         "implementation engineer", "implementation consultant",
         "onboarding engineer", "technical support engineer",
         "enterprise support engineer", "customer support engineer",
         "delivery consultant", "professional services consultant",
-    }, ["Professional Services", "Implementation", "Technical Support",
-        "Customer Support"]),
+    ], "search_keywords": ["Professional Services", "Implementation", "Technical Support",
+        "Customer Support"]},
 ]
+DEFAULT_FALLBACK_SEARCH_KEYWORDS = ["Sales Engineering", "Solutions Engineering",
+                                    "Technical Account Management", "Customer Success"]
 
 REPORT_LINE_RE = re.compile(
     r"[^.]*\b(?:report(?:s|ing)?\s+to|led\s+by|team\s+led\s+by)\b[^.]*\.?",
@@ -376,23 +391,26 @@ REPORT_LINE_RE = re.compile(
 )
 
 
-def _role_family(title: str) -> tuple[str, list[str]]:
+def _role_family(title: str, config: dict | None = None) -> tuple[str, list[str]]:
+    cfg = (config or {}).get("role_families", {})
+    families = cfg.get("families", DEFAULT_ROLE_FAMILIES)
+    fallback = cfg.get("fallback_search_keywords", DEFAULT_FALLBACK_SEARCH_KEYWORDS)
     low = title.lower()
-    for family, terms, dept_keywords in ROLE_FAMILIES:
-        if any(matcher.has(t, low) for t in terms):
-            return family, dept_keywords
-    return "Unclassified", ["Sales Engineering", "Solutions Engineering",
-                            "Technical Account Management", "Customer Success"]
+    for family in families:
+        if any(matcher.has(t, low) for t in family["terms"]):
+            return family["name"], family["search_keywords"]
+    return "Unclassified", fallback
 
 
-def _build_hm_search(job_id: int, title: str, company: str, description: str) -> dict:
+def _build_hm_search(job_id: int, title: str, company: str, description: str,
+                     config: dict | None = None) -> dict:
     """Build the hiring-manager search package for one listing.
 
     x_ray_query is safe to actually execute (a sanctioned search, not a scrape
     of google.com or linkedin.com). linkedin_jobs_query / linkedin_posts_query
     stay query-only, by design — see README.md's "No LinkedIn automation" rule.
     """
-    family, dept_keywords = _role_family(title or "")
+    family, dept_keywords = _role_family(title or "", config)
     dept_or = " OR ".join(f'"{d}"' for d in dept_keywords)
     hits = [m.group(0).strip() for m in REPORT_LINE_RE.finditer(description or "")]
     return {
@@ -416,7 +434,8 @@ def cmd_findhm(args) -> None:
     if not row:
         sys.exit(f"no listing with id {args.id}")
 
-    pkg = _build_hm_search(args.id, row["title"], row["company"] or "", row["description"] or "")
+    pkg = _build_hm_search(args.id, row["title"], row["company"] or "", row["description"] or "",
+                          load_config())
 
     if args.json:
         print(json.dumps(pkg, indent=2))

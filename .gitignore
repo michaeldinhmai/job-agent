@@ -12,5 +12,14 @@ reports/
 # Personal contact info (name, email, phone, LinkedIn) — never push this.
 profile.json
 
+# Your real job-search targets and resume content — copy from the
+# .example.json templates and customize; these are yours, not tracked.
+config.json
+variants.json
+
 # Machine-specific local tooling config (e.g. preview-server launch configs).
 .claude/
+
+# Personal project journal / outreach notes — not general app docs.
+TODO.md
+docs/outreach-playbook.md

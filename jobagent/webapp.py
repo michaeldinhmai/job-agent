@@ -43,6 +43,18 @@ def _block_cross_origin_writes():
             return jsonify({"error": "cross-origin request blocked"}), 403
 
 
+def _safe_load_config() -> tuple[dict | None, tuple | None]:
+    """cli.load_config() calls sys.exit() when config.json is missing — fine
+    for a CLI, but SystemExit inside a Flask request thread just kills that
+    request silently instead of returning a real error. Convert it here.
+    Returns (config, None) on success or (None, (json_response, status)) to
+    return directly from the caller."""
+    try:
+        return cli.load_config(), None
+    except SystemExit as e:
+        return None, (jsonify({"error": str(e)}), 400)
+
+
 def _run_cli(*args: str, timeout: int = 120) -> dict:
     """Run `python -m jobagent <args>` and capture the result. Blocking —
     only for commands that finish in seconds (ingest/rescore/digest/schedule).
@@ -127,11 +139,13 @@ def api_job_add():
         "description": body.get("description") or None,
         "posted_at": None,
     }
+    config, err = _safe_load_config()
+    if err:
+        return err
     with Database() as d:
         job_id = d.jobs.upsert(job)
         if job_id is None:
             return jsonify({"error": "a listing with this URL already exists"}), 409
-        config = cli.load_config()
         value, reasons = matcher.score(job, config)
         d.jobs.set_score(job_id, value, reasons)
         d.commit()
@@ -178,8 +192,11 @@ def api_job_findhm(job_id: int):
         row = d.jobs.get(job_id)
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
+    config, err = _safe_load_config()
+    if err:
+        return err
     pkg = cli._build_hm_search(job_id, row["title"], row["company"] or "",
-                               row["description"] or "")
+                               row["description"] or "", config)
     return jsonify(pkg)
 
 
@@ -192,7 +209,11 @@ def api_job_tailor(job_id: int):
     if not row:
         return jsonify({"error": f"no listing with id {job_id}"}), 404
 
-    profile = json.loads((ROOT / "profile.json").read_text(encoding="utf-8"))
+    profile_path = ROOT / "profile.json"
+    if not profile_path.exists():
+        return jsonify({"error": f"missing {profile_path} — copy profile.example.json "
+                        "to profile.json and fill in your own info"}), 400
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
     resume_path = profile.get("resume_path", "")
     if not resume_path or not Path(resume_path).exists():
         return jsonify({"error": f"resume not found: {resume_path!r} — "
@@ -202,8 +223,12 @@ def api_job_tailor(job_id: int):
     if len(jd) < 200:
         return jsonify({"error": "no usable job description for this listing"}), 400
 
+    config, err = _safe_load_config()
+    if err:
+        return err
+    vocab = config.get("resume_analysis", {}).get("vocab")
     resume_text = rz.read_docx(resume_path)
-    result = rz.analyze(resume_text, jd)
+    result = rz.analyze(resume_text, jd, vocab=set(vocab) if vocab else None)
     return jsonify({"id": job_id, "title": row["title"], "company": row["company"],
                     **result})
 

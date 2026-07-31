@@ -8,9 +8,10 @@ sentence swapped. The tailored .docx is stored per-listing, recorded on the
 DB row, and the apply adapters attach it automatically.
 
 Hard rule: every word on a generated resume comes from the base resume or a
-Michael-approved block in variants.json. This program cannot write new claims.
-For genuinely new wording (e.g. the asset-inventory bullet), the path is
-Claude drafts -> Michael approves -> it lands in the base or variants file.
+block you've approved in variants.json. This program cannot write new claims.
+For genuinely new wording, the path is: draft it, review it yourself, then
+it lands in the base or variants file — never generated straight onto a
+resume that's about to go out.
 
 Retention: tailored files older than 30 days are purged by the daily digest,
 except for listings marked applied — those are the record of what was sent.
@@ -38,6 +39,9 @@ RETENTION_DAYS = 30
 
 
 def load_variants() -> dict:
+    if not VARIANTS_PATH.exists():
+        raise SystemExit(f"missing {VARIANTS_PATH} — copy variants.example.json "
+                         "to variants.json and fill in your own resume content")
     return json.loads(VARIANTS_PATH.read_text(encoding="utf-8"))
 
 

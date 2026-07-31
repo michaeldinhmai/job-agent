@@ -1,0 +1,74 @@
+{
+  "_comment": "Search and scoring rules — copy this file to config.json and customize everything below for your own job search. config.json is gitignored, so your real targets/keywords never get pushed anywhere.",
+
+  "titles": {
+    "include": [
+      "example target title one",
+      "example target title two"
+    ],
+    "exclude": [
+      "intern",
+      "internship",
+      "co-op"
+    ],
+    "_exclude_notes": "Titles here are hard-rejected — a listing never shows up at all. Use keywords.boost with a negative weight instead for titles you want to demote but not reject outright (e.g. {\"senior\": -3} so 'Senior X' still shows but ranks lower, since plenty of 'Senior' postings at smaller companies are really mid-level)."
+  },
+
+  "keywords": {
+    "boost": {
+      "example-high-value-keyword": 3,
+      "example-mild-signal-keyword": 1,
+      "senior": -3
+    },
+    "_boost_notes": "Positive weights favor a listing; negative weights demote without rejecting. A keyword matched in the title counts more than the same keyword in the description — see matcher.py's TITLE_HIT vs DESCRIPTION_CAP if you want to change that balance.",
+    "block": [
+      "unpaid",
+      "commission only",
+      "door-to-door"
+    ],
+    "_block_notes": "Any listing matching one of these is rejected outright, regardless of score."
+  },
+
+  "companies": {
+    "exclude": ["example-company-to-exclude"],
+    "_exclude_notes": "Company names to filter out entirely — e.g. companies whose hiring bar doesn't fit your background, or ones you're just not interested in. This mainly guards the RSS feeds, which carry companies of every size."
+  },
+
+  "locations": {
+    "united_states_only": true,
+    "unknown_ok": true,
+    "_notes": "The location classifier (jobagent/locations.py) is US-focused today — city/state/country parsing assumes US addresses. It still won't reject listings from other countries if unknown_ok is true; it just won't structure their location as finely."
+  },
+
+  "min_score": 10,
+
+  "sources": {
+    "rss": [
+      {"name": "example-rss-feed", "url": "https://example.com/jobs.rss", "company_from_title": true}
+    ],
+    "greenhouse": ["example-company-board-slug"],
+    "_greenhouse_notes": "The board slug is the company name in a Greenhouse-hosted URL, e.g. https://job-boards.greenhouse.io/<slug>/jobs/...",
+    "lever": [],
+    "ashby": ["example-company-board-slug"],
+    "_ashby_notes": "Same idea as Greenhouse — the slug from https://jobs.ashbyhq.com/<slug>",
+    "workday": [],
+    "_workday_notes": "Add {\"tenant\": ..., \"wd\": N, \"site\": ...} parsed from a target company's Workday careers URL. jobagent/workday.py works with any tenant."
+  },
+
+  "role_families": {
+    "_notes": "Used only by `find-hm` to pick department search keywords for the hiring-manager X-ray search. Optional — if omitted, cli.py falls back to a packaged default tuned for a presales/technical-account-management job search (see DEFAULT_ROLE_FAMILIES in jobagent/cli.py). Override with your own career-track taxonomy below.",
+    "families": [
+      {
+        "name": "ExampleTrack",
+        "terms": ["example job title substring"],
+        "search_keywords": ["Example Department Name"]
+      }
+    ],
+    "fallback_search_keywords": ["Example Department Name"]
+  },
+
+  "resume_analysis": {
+    "_notes": "Used by the `tailor` command / dashboard's Tailor button to flag high-value JD terms even when they appear only once. Optional — if omitted, resume.py falls back to a packaged default vocabulary tuned for presales/tech/cloud roles (see DEFAULT_VOCAB in jobagent/resume.py). Override with vocabulary for your own field (e.g. clinical terms for healthcare, GAAP/audit terms for finance).",
+    "vocab": ["example-field-specific-term"]
+  }
+}

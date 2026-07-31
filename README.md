@@ -1,12 +1,14 @@
 # job-agent
 
-A job-search pipeline for Michael's SE/presales transition. It discovers
-listings from public job-board APIs, ranks them against tuned criteria,
-tailors a resume per listing, and pre-fills application forms — **while a
-human reviews and submits every application**.
+A job-search pipeline. It discovers listings from public job-board APIs,
+ranks them against rules you define, tailors a resume per listing, and
+pre-fills application forms — **while a human reviews and submits every
+application**.
 
-Current status and work queue: **[TODO.md](TODO.md)** (the living tracker —
-update it as things land).
+Everything that's specific to *you* (search targets, resume content, contact
+info, career-track taxonomy) lives in a handful of gitignored local files —
+see [Configuration](#configuration) below. The code and the `.example.json`
+templates are the reusable part; your own copies never get pushed anywhere.
 
 ![Pipeline flow: automated steps in teal, manual steps in purple](docs/flow.svg)
 
@@ -20,6 +22,12 @@ human reads every one before it does.
 ```bash
 python -m venv .venv && .venv\Scripts\activate
 pip install -r requirements.txt && playwright install chromium
+
+# Set up your own local config — these three files are gitignored and never pushed.
+cp config.example.json config.json       # your search targets, keywords, sources
+cp profile.example.json profile.json     # your name/contact/resume path
+cp variants.example.json variants.json   # your resume's tailoring building blocks
+# Edit all three (see Configuration below), then:
 
 python -m jobagent ingest          # pull all sources into jobs.db
 python -m jobagent list            # ranked matches
@@ -65,20 +73,28 @@ Adapter-specific (login flows, experimental ATSes):
 
 ## Configuration
 
-Three files, all in the repo root:
+Three files, all in the repo root, all gitignored (your copies stay local —
+only the `.example.json` templates are tracked):
 
-- **[config.json](config.json)** — what to search for: title include/exclude
-  lists, weighted keywords (negative weights demote, e.g. `"senior": -3`),
-  company excludes (big tech is out), US-only location policy, and the
-  sources (RSS feeds + Greenhouse/Lever/Ashby/Workday boards). Comments in
-  the file explain each knob. After editing: `python -m jobagent rescore`.
-- **[profile.json](profile.json)** — your standard application answers:
-  name, contact, LinkedIn, work authorization, sponsorship, base resume path.
-  **Never passwords** — logins happen in a real browser, only session
-  cookies persist (`auth/`, git-ignored).
-- **[variants.json](variants.json)** — approved building blocks for the
-  auto-tailor. Nothing goes on a generated resume that isn't in the base
-  resume or approved here.
+- **config.json** (from [config.example.json](config.example.json)) — what to
+  search for: title include/exclude lists, weighted keywords (negative
+  weights demote, e.g. `"senior": -3`), company excludes, US-only location
+  policy, sources (RSS feeds + Greenhouse/Lever/Ashby/Workday boards), and
+  two optional sections — `role_families` (career-track taxonomy for the
+  `find-hm` search-keyword picker) and `resume_analysis.vocab` (field-specific
+  terms the tailor gap-report flags even on a single mention). Both fall back
+  to a packaged presales/technical-account-management default if omitted —
+  see `DEFAULT_ROLE_FAMILIES` in `jobagent/cli.py` and `DEFAULT_VOCAB` in
+  `jobagent/resume.py`. Comments in the file explain each knob. After
+  editing: `python -m jobagent rescore`.
+- **profile.json** (from [profile.example.json](profile.example.json)) —
+  your standard application answers: name, contact, LinkedIn, work
+  authorization, sponsorship, base resume path. **Never passwords** — logins
+  happen in a real browser, only session cookies persist (`auth/`,
+  git-ignored).
+- **variants.json** (from [variants.example.json](variants.example.json)) —
+  approved building blocks for the auto-tailor. Nothing goes on a generated
+  resume that isn't in your base resume or approved here.
 
 ### Scoring model (matcher.py)
 
@@ -103,8 +119,9 @@ lead with what that JD cares about. The path is recorded on the listing and
 adapters attach it automatically (`--resume` overrides).
 
 - **Assembly, not authorship**: the tailor only rearranges base-resume
-  content and inserts variants.json blocks Michael approved. New wording is
-  drafted by Claude and approved by Michael before it enters the pool.
+  content and inserts variants.json blocks you've approved. If you're using
+  an AI assistant to help draft new wording, review and approve it yourself
+  before it enters the pool — the tool never invents claims on its own.
 - **Retention**: 30 days, purged by the digest — except resumes for
   `applied` listings, kept forever as the record of what was sent.
 
@@ -132,7 +149,7 @@ real browser, **you** sign in, close the window, and only cookies are saved.
 
 ## Safety design (deliberate, not TODO)
 
-- **No auto-submit.** Applications go out under Michael's name; a human reads
+- **No auto-submit.** Applications go out under your real name; a human reads
   every one. The submit click, the reCAPTCHA, and attestation questions
   (residence, conflicts of interest) are permanently manual.
 - **No stored passwords.** Browser-session cookies only, git-ignored.
@@ -150,9 +167,11 @@ jobagent/
                  Workday fetchers              locations.py US classifier
   applyflow.py   shared apply machinery        resume.py   docx read + gap report
   greenhouse.py  ashby.py  workday.py  icims.py             autotailor.py
-config.json  profile.json  variants.json  digest.bat
+config.example.json  profile.example.json  variants.example.json  digest.bat
 test_matcher.py  test_locations.py            (run both after rule changes)
-jobs.db  reports/  logs/  resume/  auth/      (local artifacts, git-ignored)
+config.json  profile.json  variants.json      (your local copies, git-ignored)
+jobs.db  reports/  logs/  resume/  auth/       (local artifacts, git-ignored)
+TODO.md  docs/outreach-playbook.md             (your own notes, git-ignored)
 ```
 
 ## Troubleshooting

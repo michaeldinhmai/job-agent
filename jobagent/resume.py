@@ -32,7 +32,7 @@ STOPWORDS = {
     "we", "us", "is", "in", "to", "of", "on", "as", "at", "by", "or", "an",
     "a", "be", "it", "if", "so", "do", "does", "what", "when", "where",
     "which", "you'll", "we're", "you're", "join", "apply", "please", "email",
-    "nvidia", "llc", "inc", "equal", "opportunity", "employer", "benefits",
+    "llc", "inc", "equal", "opportunity", "employer", "benefits",
     "salary", "range", "compensation", "eligible", "applicants", "candidate",
     "candidates", "requirements", "qualifications", "responsibilities",
     "preferred", "required", "bachelor", "master", "degree", "equivalent",
@@ -45,7 +45,9 @@ STOPWORDS = {
 
 # Terms worth flagging even if they appear only once — the vocabulary of this
 # job family, where a single mention still signals a real requirement.
-VOCAB = {
+# Packaged default (presales/technical-account-management/cloud vocabulary);
+# override with config.json's "resume_analysis.vocab" for a different field.
+DEFAULT_VOCAB = {
     "pre-sales", "presales", "post-sales", "poc", "proof of concept", "rfp",
     "rfi", "demo", "demonstration", "discovery", "technical win", "quota",
     "pipeline", "stakeholder", "enterprise", "saas", "customer-facing",
@@ -104,19 +106,22 @@ def has_term(term: str, text: str) -> bool:
     return re.search(pattern, text, re.I) is not None
 
 
-def analyze(resume_text: str, jd_text: str, top: int = 30) -> dict:
+def analyze(resume_text: str, jd_text: str, top: int = 30,
+            vocab: set[str] | None = None) -> dict:
     """Compare a resume against one job description.
 
     Returns terms the JD emphasises, split by whether the resume already
-    evidences them.
+    evidences them. `vocab` overrides DEFAULT_VOCAB — pass
+    config.get("resume_analysis", {}).get("vocab") to use a per-field list.
     """
+    active_vocab = vocab if vocab is not None else DEFAULT_VOCAB
     counts = _phrases(jd_text)
 
     candidates: dict[str, int] = {}
     for term, n in counts.items():
-        if n >= 2 or term in VOCAB:
+        if n >= 2 or term in active_vocab:
             # Prefer the longer phrase when one contains another.
-            candidates[term] = n * (2 if term in VOCAB else 1)
+            candidates[term] = n * (2 if term in active_vocab else 1)
 
     ranked = sorted(candidates.items(), key=lambda kv: (-kv[1], kv[0]))
     matched, missing = [], []
