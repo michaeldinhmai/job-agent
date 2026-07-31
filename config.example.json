@@ -37,7 +37,9 @@
   "locations": {
     "united_states_only": true,
     "unknown_ok": true,
-    "_notes": "The location classifier (jobagent/locations.py) is US-focused today — city/state/country parsing assumes US addresses. It still won't reject listings from other countries if unknown_ok is true; it just won't structure their location as finely."
+    "local_cities": [],
+    "_notes": "The location classifier (jobagent/locations.py) is US-focused today — city/state/country parsing assumes US addresses. It still won't reject listings from other countries if unknown_ok is true; it just won't structure their location as finely.",
+    "_local_cities_notes": "Optional hard requirement: if this list is non-empty, a listing is rejected outright unless it's remote-eligible OR its parsed city matches one of these exactly (case-insensitive) — e.g. [\"Dallas\", \"Fort Worth\", \"Plano\"] for a Dallas-metro-or-remote search. Leave empty to disable (no city restriction, matching current behavior)."
   },
 
   "min_score": 10,

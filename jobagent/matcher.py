@@ -100,6 +100,20 @@ def score(job: dict, config: dict) -> tuple[int, str]:
             total += LOCATION_HIT
             reasons.append(f"US location +{LOCATION_HIT}")
 
+    # Hard requirement, not a scoring nudge: reject anything that isn't
+    # clearly remote-eligible AND isn't clearly based in one of your
+    # allowed cities. Runs after the US check above, so a non-US "remote"
+    # claim never gets here in the first place when united_states_only is on.
+    local_cities = locations.get("local_cities")
+    if local_cities:
+        city, state, country = geo.parse_us_location(job.get("location"))
+        is_remote = geo.remote_label(city, state, country) is not None
+        is_local = bool(city) and city.lower() in {c.lower() for c in local_cities}
+        if not is_remote and not is_local:
+            return -1, f"not remote and not in {local_cities}: {job.get('location')!r}"
+        if is_local:
+            reasons.append(f"local city: {city}")
+
     description_total = 0
     for word, weight in keywords.get("boost", {}).items():
         word, weight = word.lower(), int(weight)
