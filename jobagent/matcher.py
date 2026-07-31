@@ -85,7 +85,16 @@ def score(job: dict, config: dict) -> tuple[int, str]:
     total = 0
     reasons: list[str] = []
 
-    matched = [t for t in titles.get("include", []) if has(t, title)]
+    # Hard requirement, not a scoring nudge: with an include list configured,
+    # a listing whose title matches none of them is rejected outright, even
+    # if keyword boosts alone would otherwise clear min_score (e.g. a plain
+    # "Customer Success Manager" picking up "customer success"(title) +3 and
+    # a few description hits) — the include list exists to define the target
+    # roles, not just to nudge ranking within them.
+    include_titles = titles.get("include", [])
+    matched = [t for t in include_titles if has(t, title)]
+    if include_titles and not matched:
+        return -1, f"title matches none of {include_titles}"
     if matched:
         total += TITLE_HIT
         reasons.append(f"title~{matched[0]!r} +{TITLE_HIT}")

@@ -15,8 +15,8 @@ CONFIG = json.loads((Path(__file__).parent / "config.json").read_text(encoding="
 
 # (title, should_be_rejected)
 CASES = [
-    ("International Solutions Engineer", False),
-    ("Internal Tools Solutions Engineer", False),
+    ("International Sales Engineer", False),
+    ("Internal Tools Sales Engineer", False),
     ("Solutions Engineer Intern", True),
     ("Technical Account Manager", False),
     ("Engineering Manager, Solutions", True),
