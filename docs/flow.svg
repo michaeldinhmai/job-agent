@@ -1,0 +1,93 @@
+<svg viewBox="0 0 680 810" width="680" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="job-agent pipeline: automated steps in teal, manual steps in purple">
+  <title>job-agent flow: automated vs manual</title>
+  <style>
+    .box-auto   { fill: #E1F5EE; stroke: #0F6E56; }
+    .box-you    { fill: #EEEDFE; stroke: #534AB7; }
+    .box-store  { fill: #F1EFE8; stroke: #5F5E5A; }
+    .t-auto     { fill: #085041; font: 500 15px sans-serif; }
+    .s-auto     { fill: #0F6E56; font: 400 12px sans-serif; }
+    .t-you      { fill: #3C3489; font: 500 15px sans-serif; }
+    .s-you      { fill: #534AB7; font: 400 12px sans-serif; }
+    .t-store    { fill: #444441; font: 500 15px sans-serif; }
+    .s-store    { fill: #5F5E5A; font: 400 12px sans-serif; }
+    .head       { fill: #444441; font: 500 16px sans-serif; }
+    .note       { fill: #5F5E5A; font: 400 12px sans-serif; }
+    .wire       { stroke: #888780; stroke-width: 1.5; fill: none; }
+  </style>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#888780"/>
+    </marker>
+  </defs>
+
+  <rect x="40" y="10" width="14" height="14" rx="3" class="box-auto"/>
+  <text x="60" y="22" class="note">automated</text>
+  <rect x="150" y="10" width="14" height="14" rx="3" class="box-you"/>
+  <text x="170" y="22" class="note">you</text>
+  <rect x="216" y="10" width="14" height="14" rx="3" class="box-store"/>
+  <text x="236" y="22" class="note">stored artifact</text>
+
+  <text x="40" y="56" class="head">every morning — 8:00 am</text>
+
+  <rect x="160" y="66" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="87" text-anchor="middle" class="t-auto">scheduled task runs digest</text>
+  <text x="340" y="105" text-anchor="middle" class="s-auto">Windows Task Scheduler</text>
+  <line x1="340" y1="116" x2="340" y2="130" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="132" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="153" text-anchor="middle" class="t-auto">ingest 15 job sources</text>
+  <text x="340" y="171" text-anchor="middle" class="s-auto">RSS · Greenhouse · Ashby APIs</text>
+  <line x1="340" y1="182" x2="340" y2="196" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="198" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="219" text-anchor="middle" class="t-auto">score and rank new listings</text>
+  <text x="340" y="237" text-anchor="middle" class="s-auto">US-only · big tech excluded</text>
+  <line x1="340" y1="248" x2="340" y2="262" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="264" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="285" text-anchor="middle" class="t-auto">auto-tailor resume per match</text>
+  <text x="340" y="303" text-anchor="middle" class="s-auto">approved blocks only · kept 30 days</text>
+  <line x1="340" y1="314" x2="340" y2="328" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="330" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="351" text-anchor="middle" class="t-auto">digest report written</text>
+  <text x="340" y="369" text-anchor="middle" class="s-auto">reports/digest-YYYY-MM-DD.md</text>
+
+  <line x1="340" y1="380" x2="340" y2="404" class="wire" marker-end="url(#arr)"/>
+  <text x="40" y="398" class="head">your move</text>
+
+  <rect x="160" y="406" width="360" height="50" rx="4" class="box-you"/>
+  <text x="340" y="427" text-anchor="middle" class="t-you">read digest, pick listings</text>
+  <text x="340" y="445" text-anchor="middle" class="s-you">python -m jobagent queue 533 914 …</text>
+
+  <line x1="340" y1="456" x2="340" y2="486" class="wire" marker-end="url(#arr)"/>
+  <text x="40" y="480" class="head">per application — loops through your queue</text>
+
+  <rect x="160" y="488" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="509" text-anchor="middle" class="t-auto">form pre-filled in browser</text>
+  <text x="340" y="527" text-anchor="middle" class="s-auto">tailored resume · known questions</text>
+  <line x1="340" y1="538" x2="340" y2="552" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="554" width="360" height="50" rx="4" class="box-you"/>
+  <text x="340" y="575" text-anchor="middle" class="t-you">you review and submit</text>
+  <text x="340" y="593" text-anchor="middle" class="s-you">flagged answers · CAPTCHA · click</text>
+  <line x1="340" y1="604" x2="340" y2="618" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="620" width="360" height="50" rx="4" class="box-auto"/>
+  <text x="340" y="641" text-anchor="middle" class="t-auto">confirmation detected, marked applied</text>
+  <text x="340" y="659" text-anchor="middle" class="s-auto">detection only — it cannot click</text>
+
+  <path d="M 520 645 L 560 645 L 560 513 L 524 513" class="wire" marker-end="url(#arr)"/>
+  <text x="568" y="583" class="note">next id</text>
+
+  <line x1="340" y1="670" x2="340" y2="694" class="wire" marker-end="url(#arr)"/>
+
+  <rect x="160" y="696" width="360" height="50" rx="4" class="box-store"/>
+  <text x="340" y="717" text-anchor="middle" class="t-store">jobs.db tracks everything</text>
+  <text x="340" y="735" text-anchor="middle" class="s-store">statuses · sent resumes · export</text>
+
+  <line x1="156" y1="580" x2="112" y2="580" class="wire" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+  <text x="30" y="566" class="note">close window</text>
+  <text x="30" y="582" class="note">= queue stops,</text>
+  <text x="30" y="598" class="note">nothing marked</text>
+</svg>

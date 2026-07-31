@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>job-agent dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>job-agent</h1>
+  <div id="summary" class="summary"></div>
+</header>
+
+<div class="actions-bar">
+  <span class="actions-label">Pipeline:</span>
+  <button id="action-ingest">Ingest</button>
+  <button id="action-rescore">Rescore</button>
+  <button id="action-digest">Digest</button>
+  <span id="schedule-status" class="schedule-status">schedule: —</span>
+  <button id="action-schedule-on">Turn on</button>
+  <button id="action-schedule-off">Turn off</button>
+  <span id="action-output" class="action-output"></span>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="jobs">Jobs</button>
+  <button class="tab-btn" data-tab="contacts">Contacts</button>
+</nav>
+
+<section id="jobs-tab" class="tab-panel active">
+  <div class="toolbar">
+    <input id="job-search" type="search" placeholder="Search title or company...">
+    <select id="job-status-filter">
+      <option value="">All statuses</option>
+      <option value="new">new</option>
+      <option value="shortlist">shortlist</option>
+      <option value="applied">applied</option>
+      <option value="ignored">ignored</option>
+      <option value="rejected">rejected</option>
+    </select>
+    <select id="job-company-filter"><option value="">All companies</option></select>
+    <select id="job-state-filter"><option value="">All states</option></select>
+    <select id="job-source-filter"><option value="">All sources</option></select>
+    <input id="job-min-score" type="number" placeholder="min score" style="width:8em">
+    <label class="checkbox-label">
+      <input type="checkbox" id="job-has-hm"> has hiring mgr
+    </label>
+    <button id="job-refresh">Refresh</button>
+    <button id="job-add-btn" class="primary">+ Add listing</button>
+    <a id="job-export-link" href="/api/export.csv" target="_blank"><button>Export CSV</button></a>
+  </div>
+  <table id="jobs-table">
+    <thead>
+      <tr>
+        <th>Match %</th><th>Title</th><th>Company</th><th>City, State</th>
+        <th>Status</th><th>Hiring mgr</th><th>Source</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="jobs-tbody"></tbody>
+  </table>
+</section>
+
+<section id="contacts-tab" class="tab-panel">
+  <div class="toolbar">
+    <input id="contact-search" type="search" placeholder="Filter by company...">
+    <select id="contact-channel-filter"><option value="">All channels</option></select>
+    <button id="contact-refresh">Refresh</button>
+    <button id="contact-add-btn" class="primary">+ Add contact</button>
+  </div>
+  <table id="contacts-table">
+    <thead>
+      <tr>
+        <th>Date</th><th>Name</th><th>Title</th><th>Company</th>
+        <th>Channel</th><th>Outcome</th><th>Follow-up</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="contacts-tbody"></tbody>
+  </table>
+</section>
+
+<div id="modal-backdrop" class="modal-backdrop hidden">
+  <div id="modal" class="modal"></div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
