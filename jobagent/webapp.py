@@ -94,11 +94,18 @@ def api_status():
     with Database() as d:
         counts = d.jobs.counts()
         n_contacts = d.conn.execute("SELECT COUNT(*) c FROM contacts").fetchone()["c"]
+    config, err = _safe_load_config()
     return jsonify({
         "counts": {s: counts.get(s, 0) for s in STATUSES},
         "total": sum(counts.values()),
         "contacts": n_contacts,
         "statuses": list(STATUSES),
+        # Lets the dashboard default its score filter to the same bar the
+        # matcher actually applies, so listings the matcher already rejected
+        # (score < min_score, or -1 for a hard exclude) aren't the first
+        # thing shown — the raw ingest keeps everything for auditing, but
+        # that's not what you want staring at you by default.
+        "min_score": None if err else config.get("min_score", 0),
     })
 
 

@@ -60,6 +60,20 @@ async function loadSummary() {
   el.innerHTML = parts.join("");
 }
 
+// Ingest stores everything a source hands back — a company's whole board,
+// every RSS item — the matcher only scores/rejects after the fact. Default
+// the score filter to the same bar config.json's min_score already applies,
+// so listings the matcher already rejected (Account Executive, Graphic
+// Designer, ...) aren't the first thing shown. One-shot: only runs before
+// the initial loadJobs(), never overwrites a filter you've since changed.
+async function applyDefaultScoreFilter() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    const el = document.getElementById("job-min-score");
+    if (s.min_score != null && !el.value) el.value = s.min_score;
+  } catch (e) { /* dashboard still works with no default filter */ }
+}
+
 // ---------- filter options ----------
 async function loadFilterOptions() {
   const j = await (await fetch("/api/jobs/filter-options")).json();
@@ -442,7 +456,7 @@ document.getElementById("action-schedule-off").addEventListener("click", async (
 
 // ---------- init ----------
 loadSummary();
-loadJobs();
+applyDefaultScoreFilter().then(loadJobs);
 loadContacts();
 loadFilterOptions();
 loadScheduleStatus();
