@@ -54,7 +54,13 @@
     "ashby": ["example-company-board-slug"],
     "_ashby_notes": "Same idea as Greenhouse — the slug from https://jobs.ashbyhq.com/<slug>",
     "workday": [],
-    "_workday_notes": "Add {\"tenant\": ..., \"wd\": N, \"site\": ...} parsed from a target company's Workday careers URL. jobagent/workday.py works with any tenant."
+    "_workday_notes": "Add {\"tenant\": ..., \"wd\": N, \"site\": ...} parsed from a target company's Workday careers URL. jobagent/workday.py works with any tenant.",
+    "smartrecruiters": [],
+    "_smartrecruiters_notes": "Identifier from https://jobs.smartrecruiters.com/<Identifier>/... — case-sensitive, and it's the URL slug, not the company's display name.",
+    "recruitee": [],
+    "_recruitee_notes": "Subdomain from https://<slug>.recruitee.com",
+    "workable": [],
+    "_workable_notes": "Slug from https://apply.workable.com/<slug>/..."
   },
 
   "role_families": {

@@ -79,7 +79,8 @@ only the `.example.json` templates are tracked):
 - **config.json** (from [config.example.json](config.example.json)) — what to
   search for: title include/exclude lists, weighted keywords (negative
   weights demote, e.g. `"senior": -3`), company excludes, US-only location
-  policy, sources (RSS feeds + Greenhouse/Lever/Ashby/Workday boards), and
+  policy, sources (RSS feeds + Greenhouse/Lever/Ashby/Workday/SmartRecruiters/
+  Recruitee/Workable boards), and
   two optional sections — `role_families` (career-track taxonomy for the
   `find-hm` search-keyword picker) and `resume_analysis.vocab` (field-specific
   terms the tailor gap-report flags even on a single mention). Both fall back
@@ -164,7 +165,8 @@ real browser, **you** sign in, close the window, and only cookies are saved.
 jobagent/
   cli.py         commands + ATS routing        db.py       SQLite storage
   sources.py     RSS/Greenhouse/Lever/Ashby/   matcher.py  scoring rules
-                 Workday fetchers              locations.py US classifier
+                 Workday/SmartRecruiters/      locations.py US classifier
+                 Recruitee/Workable fetchers   salary.py   JD salary parser
   applyflow.py   shared apply machinery        resume.py   docx read + gap report
   greenhouse.py  ashby.py  workday.py  icims.py             autotailor.py
 config.example.json  profile.example.json  variants.example.json  digest.bat

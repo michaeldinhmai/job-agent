@@ -205,6 +205,83 @@ def _workday_description(client, base: str, tenant: str, site: str, path: str) -
         return ""
 
 
+def fetch_smartrecruiters(client: httpx.Client, company: str):
+    """SmartRecruiters public postings API.
+
+    The list endpoint carries no description text at all — SmartRecruiters
+    only exposes that on the per-posting detail endpoint — so this fetches
+    one extra request per listing, same tradeoff as Workday's optional
+    `descriptions=True`, but always on here: without it, salary parsing and
+    every description-based keyword boost would be starved for every listing
+    from this source.
+    """
+    url = f"https://api.smartrecruiters.com/v1/companies/{company}/postings?limit=200"
+    for job in _get(client, url).json().get("content", []):
+        job_id = job.get("id", "")
+        if not job_id:
+            continue
+        loc = job.get("location") or {}
+        yield {
+            "source": f"smartrecruiters:{company}",
+            "company": company,
+            "title": job.get("name", ""),
+            "location": loc.get("fullLocation") or ("Remote" if loc.get("remote") else ""),
+            "url": f"https://jobs.smartrecruiters.com/{company}/{job_id}",
+            "description": clean(_smartrecruiters_description(client, company, job_id)),
+            "posted_at": job.get("releasedDate"),
+        }
+
+
+def _smartrecruiters_description(client: httpx.Client, company: str, job_id: str) -> str:
+    try:
+        url = f"https://api.smartrecruiters.com/v1/companies/{company}/postings/{job_id}"
+        sections = _get(client, url).json().get("jobAd", {}).get("sections", {})
+        return " ".join(s.get("text", "") for s in sections.values() if s.get("text"))
+    except Exception:
+        return ""
+
+
+def fetch_recruitee(client: httpx.Client, company: str):
+    url = f"https://{company}.recruitee.com/api/offers/"
+    for job in _get(client, url).json().get("offers", []):
+        if job.get("status") != "published":
+            continue
+        location = f"Remote - {job.get('country', '')}" if job.get("remote") else (
+            job.get("location") or ""
+        )
+        yield {
+            "source": f"recruitee:{company}",
+            "company": job.get("company_name") or company,
+            "title": job.get("title", ""),
+            "location": location,
+            "url": job.get("careers_url", ""),
+            "description": clean(job.get("description")),
+            "posted_at": job.get("published_at"),
+        }
+
+
+def fetch_workable(client: httpx.Client, company: str):
+    """`?details=true` is what actually puts a description on each job — the
+    plain widget endpoint the docs advertise omits it entirely."""
+    url = f"https://apply.workable.com/api/v1/widget/accounts/{company}?details=true"
+    for job in _get(client, url).json().get("jobs", []):
+        if job.get("telecommuting"):
+            location = f"Remote - {job.get('country', '')}"
+        else:
+            location = ", ".join(
+                p for p in (job.get("city"), job.get("state"), job.get("country")) if p
+            )
+        yield {
+            "source": f"workable:{company}",
+            "company": company,
+            "title": job.get("title", ""),
+            "location": location,
+            "url": job.get("url", ""),
+            "description": clean(job.get("description")),
+            "posted_at": job.get("published_on"),
+        }
+
+
 def fetch_all(config: dict, only: str | None = None):
     """Yield (source_label, jobs, error) for each configured source."""
     src = config.get("sources", {})
@@ -240,6 +317,14 @@ def fetch_all(config: dict, only: str | None = None):
                 ),
             )
         )
+    for company in src.get("smartrecruiters", []):
+        plan.append(
+            (f"smartrecruiters:{company}", lambda c, x=company: fetch_smartrecruiters(c, x))
+        )
+    for company in src.get("recruitee", []):
+        plan.append((f"recruitee:{company}", lambda c, x=company: fetch_recruitee(c, x)))
+    for company in src.get("workable", []):
+        plan.append((f"workable:{company}", lambda c, x=company: fetch_workable(c, x)))
 
     with httpx.Client() as client:
         for label, fn in plan:
