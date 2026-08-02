@@ -19,6 +19,9 @@ CASES = [
     ("Worldwide", "us"),
     ("Anywhere", "us"),
     ("North America", "us"),
+    ("West Coast (Remote)", "us"),      # regional descriptor, no country token
+    ("East Coast, Remote", "us"),
+    ("Southeast Territory", "us"),
     ("Remote - United Kingdom", "elsewhere"),
     ("Remote - Spain", "elsewhere"),
     ("London, United Kingdom", "elsewhere"),

@@ -90,6 +90,16 @@ ELSEWHERE = {
 # No country named, but a US applicant can take the job.
 GLOBAL_OK = {"worldwide", "anywhere", "global", "north america", "americas"}
 
+# US regional descriptors with no city/state/country token of their own
+# ("West Coast (Remote)", "Southeast Territory") — real strings seen on
+# Greenhouse boards. Treated as a US signal for country resolution; a
+# non-US company using these same words for its own region is exceedingly
+# rare on US-focused job boards.
+US_REGIONS = {
+    "west coast", "east coast", "gulf coast", "pacific northwest",
+    "midwest", "northeast", "southeast", "southwest", "mid-atlantic",
+}
+
 # Non-US countries worth naming explicitly for the "Remote, <country>" display.
 # Deliberately excludes ambiguous names that collide with US states in this
 # dataset ("Georgia" the country vs. the US state — the state reading always
@@ -215,10 +225,11 @@ def parse_us_location(location: str | None) -> tuple[str | None, str | None, str
                 break
 
     country = None
-    if state or city or COUNTRY_RE.search(raw) or ABBR_RE.search(raw):
+    fold_raw = _fold(raw)
+    if (state or city or COUNTRY_RE.search(raw) or ABBR_RE.search(raw)
+            or any(_word(r, fold_raw) for r in US_REGIONS)):
         country = "United States"
     else:
-        fold_raw = _fold(raw)
         for name, code in COUNTRY_CODES.items():
             if name in ("united states", "uae") or not _word(name, fold_raw):
                 continue
@@ -265,7 +276,7 @@ def classify(location: str | None) -> str:
     if not us:
         us = any(_word(state, low) for state in STATES) or any(
             _word(city, low) for city in US_CITIES
-        )
+        ) or any(_word(region, low) for region in US_REGIONS)
 
     elsewhere = any(_word(term, low) for term in ELSEWHERE)
 
