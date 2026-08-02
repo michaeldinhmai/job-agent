@@ -11,7 +11,12 @@
       "internship",
       "co-op"
     ],
-    "_exclude_notes": "Titles here are hard-rejected — a listing never shows up at all. Use keywords.boost with a negative weight instead for titles you want to demote but not reject outright (e.g. {\"senior\": -3} so 'Senior X' still shows but ranks lower, since plenty of 'Senior' postings at smaller companies are really mid-level)."
+    "_exclude_notes": "Titles here are hard-rejected — a listing never shows up at all. Use keywords.boost with a negative weight instead for titles you want to demote but not reject outright (e.g. {\"senior\": -3} so 'Senior X' still shows but ranks lower, since plenty of 'Senior' postings at smaller companies are really mid-level).",
+
+    "include_needs_technical_signal": [
+      "example ambiguous title"
+    ],
+    "_include_needs_technical_signal_notes": "Optional second, looser tier for titles that mean genuinely different things at different companies (classic case: 'Customer Success Manager' or 'Account Manager' — the same title covers everything from pure relationship/renewals work to a deeply technical post-sale role, depending on the employer). A match here only counts if a keywords.technical_signal term also appears in the title or description; title.include matches never need this extra check. Leave empty to disable."
   },
 
   "keywords": {
@@ -21,6 +26,11 @@
       "senior": -3
     },
     "_boost_notes": "Positive weights favor a listing; negative weights demote without rejecting. A keyword matched in the title counts more than the same keyword in the description — see matcher.py's TITLE_HIT vs DESCRIPTION_CAP if you want to change that balance.",
+
+    "technical_signal": [
+      "example-technical-keyword"
+    ],
+    "_technical_signal_notes": "Only consulted for titles.include_needs_technical_signal matches — keep this narrower than keywords.boost. Generic B2B-SaaS words ('enterprise', 'cloud', 'saas') show up in almost any JD and won't discriminate; pick terms that actually signal hands-on technical work for your field (e.g. 'api', 'sql', 'itsm', 'active directory').",
     "block": [
       "unpaid",
       "commission only",

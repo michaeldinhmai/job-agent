@@ -87,14 +87,33 @@ def score(job: dict, config: dict) -> tuple[int, str]:
 
     # Hard requirement, not a scoring nudge: with an include list configured,
     # a listing whose title matches none of them is rejected outright, even
-    # if keyword boosts alone would otherwise clear min_score (e.g. a plain
-    # "Customer Success Manager" picking up "customer success"(title) +3 and
-    # a few description hits) — the include list exists to define the target
-    # roles, not just to nudge ranking within them.
+    # if keyword boosts alone would otherwise clear min_score — the include
+    # list exists to define the target roles, not just to nudge ranking
+    # within them.
     include_titles = titles.get("include", [])
     matched = [t for t in include_titles if has(t, title)]
-    if include_titles and not matched:
-        return -1, f"title matches none of {include_titles}"
+
+    # A second, looser tier for titles that are genuinely ambiguous across
+    # companies — "Customer Success Manager"/"Account Manager"/"Renewal
+    # Manager" can be the exact same job as a Technical Account Manager at
+    # one company and pure relationship/renewals with zero technical scope
+    # at another. Title text alone can't tell them apart, so these only pass
+    # if the posting also shows a technical-signal keyword (in the title or
+    # the description) — the title picks the track, the signal confirms it's
+    # the technical flavor of that track.
+    soft_titles = titles.get("include_needs_technical_signal", [])
+    soft_matched = [t for t in soft_titles if has(t, title)] if not matched else []
+    if soft_matched:
+        technical_signal = keywords.get("technical_signal", [])
+        signal_hit = next((k for k in technical_signal if has(k, body)), None)
+        if not signal_hit:
+            return -1, (f"title~{soft_matched[0]!r} but no technical signal "
+                         f"in {technical_signal}")
+        matched = soft_matched
+        reasons.append(f"technical signal: {signal_hit!r}")
+
+    if (include_titles or soft_titles) and not matched:
+        return -1, f"title matches none of {include_titles + soft_titles}"
     if matched:
         total += TITLE_HIT
         reasons.append(f"title~{matched[0]!r} +{TITLE_HIT}")
