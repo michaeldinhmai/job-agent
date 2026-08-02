@@ -70,7 +70,10 @@
     "recruitee": [],
     "_recruitee_notes": "Subdomain from https://<slug>.recruitee.com",
     "workable": [],
-    "_workable_notes": "Slug from https://apply.workable.com/<slug>/..."
+    "_workable_notes": "Slug from https://apply.workable.com/<slug>/...",
+    "remoteok": false,
+    "himalayas": false,
+    "_broad_feeds_notes": "remoteok/himalayas are global, unscoped feeds — no company list, every listing on the platform, same idea as the rss feeds above. Set remoteok to true to enable it. Set himalayas to {\"limit\": 500} to enable it (it has ~95k jobs and no working keyword filter, so this only samples the most recent `limit` postings — raise it for more coverage at the cost of a slower ingest). Both rely entirely on titles/keywords/locations above to do the filtering, so expect more noise than the curated ATS boards."
   },
 
   "role_families": {

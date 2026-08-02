@@ -282,6 +282,60 @@ def fetch_workable(client: httpx.Client, company: str):
         }
 
 
+def fetch_remoteok(client: httpx.Client):
+    """RemoteOK's public feed — global, unfiltered, every field/company.
+
+    Item 0 of the response is a legal/attribution notice, not a job — skip
+    it. No title/company scoping like the ATS fetchers: this exists to widen
+    the net the same way the RSS feeds do, relying entirely on config.json's
+    title/location/keyword rules to do the filtering.
+    """
+    for job in _get(client, "https://remoteok.com/api").json()[1:]:
+        yield {
+            "source": "remoteok",
+            "company": job.get("company", ""),
+            "title": job.get("position", ""),
+            "location": job.get("location", ""),
+            "url": job.get("url", ""),
+            "description": clean(job.get("description")),
+            "posted_at": job.get("date"),
+        }
+
+
+def fetch_himalayas(client: httpx.Client, limit: int = 500):
+    """Himalayas' public feed. ~95k jobs total — this pulls only the most
+    recent `limit`, not the whole index; there's no working server-side
+    keyword/category filter as of 2026-07-31 (every query param tried was
+    silently ignored), so config.json's rules do all the filtering, same
+    as RemoteOK. Occasionally carries an internal test entry ("Backfill
+    Test Role") — harmless, the matcher rejects it like anything else that
+    doesn't fit.
+
+    The API also silently caps at 20 items per request no matter what
+    `?limit=` asks for (it just echoes the request back in the response
+    without honoring it) — pagination here steps by however many items a
+    page actually returned, not by the requested size, so it can't silently
+    skip a stretch of results the way a fixed-size offset step would.
+    """
+    fetched = 0
+    while fetched < limit:
+        data = _get(client, f"https://himalayas.app/jobs/api?offset={fetched}").json()
+        jobs = data.get("jobs", [])
+        if not jobs:
+            return
+        for job in jobs:
+            yield {
+                "source": "himalayas",
+                "company": job.get("companyName", ""),
+                "title": job.get("title", ""),
+                "location": ", ".join(job.get("locationRestrictions") or []),
+                "url": job.get("guid", ""),
+                "description": clean(job.get("description")),
+                "posted_at": job.get("pubDate"),
+            }
+        fetched += len(jobs)
+
+
 def fetch_all(config: dict, only: str | None = None):
     """Yield (source_label, jobs, error) for each configured source."""
     src = config.get("sources", {})
@@ -325,6 +379,12 @@ def fetch_all(config: dict, only: str | None = None):
         plan.append((f"recruitee:{company}", lambda c, x=company: fetch_recruitee(c, x)))
     for company in src.get("workable", []):
         plan.append((f"workable:{company}", lambda c, x=company: fetch_workable(c, x)))
+    if src.get("remoteok"):
+        plan.append(("remoteok", fetch_remoteok))
+    himalayas = src.get("himalayas")
+    if himalayas:
+        opts = himalayas if isinstance(himalayas, dict) else {}
+        plan.append(("himalayas", lambda c: fetch_himalayas(c, opts.get("limit", 500))))
 
     with httpx.Client() as client:
         for label, fn in plan:
