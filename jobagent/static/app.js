@@ -154,12 +154,13 @@ async function showJobDetail(id) {
     <button class="close-x">&times;</button>
     <h2>${escapeHtml(j.title)}</h2>
     <div class="field"><label>Company</label><div>${escapeHtml(j.company)}</div></div>
+    <div class="field"><label>Department</label><div>${escapeHtml(j.department) || "—"}</div></div>
     <div class="field"><label>Location (as listed)</label><div>${escapeHtml(j.location)}</div></div>
     <div class="field"><label>Location (city / state / country)</label>
       <div>${escapeHtml(j.city) || "—"} / ${escapeHtml(j.state) || "—"} / ${escapeHtml(j.country) || "—"}</div>
     </div>
     <div class="field"><label>Match % / status / source</label>
-      <div>${j.score_pct}/100 (raw ${j.score}) · <span class="badge ${j.status}">${j.status}</span> · ${escapeHtml(j.source)}</div>
+      <div>${j.score_pct}/100 (raw ${j.score}) · <span class="badge ${j.status}">${j.status}</span> · ${escapeHtml(j.source)}${j.stale ? " · <span class=\"badge stale\">stale (30+ days)</span>" : ""}</div>
     </div>
     <div class="field"><label>Salary (parsed from JD)</label><div>${escapeHtml(j.salary_label) || "not disclosed / not found"}</div></div>
     <div class="field"><label>Why it matched</label><div class="reasons">${escapeHtml(j.reasons)}</div></div>

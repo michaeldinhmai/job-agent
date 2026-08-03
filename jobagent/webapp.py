@@ -14,6 +14,8 @@ import io
 import json
 import subprocess
 import sys
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
@@ -22,6 +24,32 @@ from . import cli, matcher
 from . import locations as geo
 from . import salary as sal
 from .db import ROOT, STATUSES, Database
+
+STALE_DAYS = 30
+
+
+def _posted_days_ago(posted_at: str | None) -> int | None:
+    """Best-effort age in days for a posted_at string. Formats vary wildly
+    across sources (ISO, RFC822 RSS dates, date-only Workable strings) —
+    returns None when it can't be parsed rather than guessing, so an
+    unparseable date is never mislabeled stale."""
+    if not posted_at:
+        return None
+    for parser in (lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")),
+                   parsedate_to_datetime):
+        try:
+            dt = parser(posted_at)
+        except (ValueError, TypeError):
+            continue
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - dt).days
+    return None
+
+
+def is_stale(posted_at: str | None) -> bool:
+    days = _posted_days_ago(posted_at)
+    return days is not None and days > STALE_DAYS
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
@@ -81,6 +109,7 @@ def job_to_dict(row) -> dict:
     d["score_pct"] = matcher.to_percent(row["score"])
     d["remote_label"] = geo.remote_label(row["city"], row["state"], row["country"])
     d["salary_label"] = sal.format_salary(row["salary_min"], row["salary_max"])
+    d["stale"] = is_stale(row["posted_at"])
     return d
 
 
@@ -382,13 +411,29 @@ def api_export_csv():
             status=request.args.get("status") or None,
             limit=10_000,
         )
+    config, _ = _safe_load_config()
+    local_cities = {c.lower() for c in (config or {}).get("locations", {}).get("local_cities", [])}
+
+    def is_remote(r) -> bool:
+        return geo.remote_label(r["city"], r["state"], r["country"]) is not None
+
+    def is_dfw(r) -> bool:
+        return bool(r["city"]) and r["city"].lower() in local_cities
+
+    # Remote-or-DFW rows first (score is already the primary filter — this
+    # is a display convenience, not a second gate), score descending within
+    # each group.
+    rows = sorted(rows, key=lambda r: (0 if (is_remote(r) or is_dfw(r)) else 1, -r["score"]))
+
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["id", "score", "title", "company", "city", "state",
-                     "country", "salary_min", "salary_max", "status", "hiring_manager", "url"])
+    writer.writerow(["id", "score", "title", "department", "company", "city", "state",
+                     "country", "remote_flag", "stale", "salary_min", "salary_max",
+                     "status", "hiring_manager", "apply_url"])
     for r in rows:
-        writer.writerow([r["id"], r["score"], r["title"], r["company"], r["city"],
-                         r["state"], r["country"], r["salary_min"], r["salary_max"],
+        writer.writerow([r["id"], r["score"], r["title"], r["department"], r["company"],
+                         r["city"], r["state"], r["country"], is_remote(r),
+                         is_stale(r["posted_at"]), r["salary_min"], r["salary_max"],
                          r["status"], r["hiring_manager"], r["url"]])
     return Response(buf.getvalue(), mimetype="text/csv", headers={
         "Content-Disposition": "attachment; filename=jobagent_export.csv"

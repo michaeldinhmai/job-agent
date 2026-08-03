@@ -83,16 +83,16 @@ class JobRepository:
         salary_min, salary_max = sal.parse_salary(job.get("description"))
         cur = self.conn.execute(
             """
-            INSERT INTO jobs (source, company, title, location, url,
+            INSERT INTO jobs (source, company, title, department, location, url,
                               description, posted_at, first_seen, city, state, country,
                               salary_min, salary_max)
-            VALUES (:source, :company, :title, :location, :url,
+            VALUES (:source, :company, :title, :department, :location, :url,
                     :description, :posted_at, :first_seen, :city, :state, :country,
                     :salary_min, :salary_max)
             ON CONFLICT(url) DO NOTHING
             """,
-            {**job, "first_seen": now(), "city": city, "state": state, "country": country,
-             "salary_min": salary_min, "salary_max": salary_max},
+            {"department": "", **job, "first_seen": now(), "city": city, "state": state,
+             "country": country, "salary_min": salary_min, "salary_max": salary_max},
         )
         return cur.lastrowid if cur.rowcount > 0 else None
 
@@ -319,6 +319,11 @@ class Database:
         if "salary_min" not in cols:
             self.conn.execute("ALTER TABLE jobs ADD COLUMN salary_min INTEGER")
             self.conn.execute("ALTER TABLE jobs ADD COLUMN salary_max INTEGER")
+            self.conn.commit()
+        # Migration: department, pulled straight from the source ATS where it
+        # exposes one (added 2026-07-31).
+        if "department" not in cols:
+            self.conn.execute("ALTER TABLE jobs ADD COLUMN department TEXT")
             self.conn.commit()
             JobRepository(self.conn).backfill_salaries()
 

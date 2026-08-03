@@ -1,7 +1,12 @@
 """Listing sources.
 
 Every fetcher returns dicts with the same shape:
-    source, company, title, location, url, description, posted_at
+    source, company, title, department, location, url, description, posted_at
+
+`department` is best-effort — every ATS-specific fetcher below pulls it
+straight from the API when the platform exposes it (all six currently do);
+the broad/unscoped feeds (RSS, RemoteOK, Himalayas) leave it blank since
+there's no reliable equivalent field.
 
 Only public, machine-readable endpoints are used here — RSS feeds and the job
 board APIs that Greenhouse/Lever/Ashby publish for their customers. Nothing in
@@ -82,10 +87,12 @@ def fetch_rss(client: httpx.Client, name: str, url: str, company_from_title: boo
 def fetch_greenhouse(client: httpx.Client, board: str):
     url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs?content=true"
     for job in _get(client, url).json().get("jobs", []):
+        depts = job.get("departments") or []
         yield {
             "source": f"greenhouse:{board}",
             "company": board,
             "title": job.get("title", ""),
+            "department": ", ".join(d.get("name", "") for d in depts if d.get("name")),
             "location": (job.get("location") or {}).get("name", ""),
             "url": job.get("absolute_url", ""),
             "description": clean(job.get("content")),
@@ -101,6 +108,7 @@ def fetch_lever(client: httpx.Client, company: str):
             "source": f"lever:{company}",
             "company": company,
             "title": job.get("text", ""),
+            "department": cats.get("department", ""),
             "location": cats.get("location", ""),
             "url": job.get("hostedUrl", ""),
             "description": clean(job.get("descriptionPlain") or job.get("description")),
@@ -115,6 +123,7 @@ def fetch_ashby(client: httpx.Client, board: str):
             "source": f"ashby:{board}",
             "company": board,
             "title": job.get("title", ""),
+            "department": job.get("department", ""),
             "location": job.get("location", ""),
             "url": job.get("jobUrl", ""),
             "description": clean(
@@ -208,6 +217,11 @@ def _workday_description(client, base: str, tenant: str, site: str, path: str) -
 def fetch_smartrecruiters(client: httpx.Client, company: str):
     """SmartRecruiters public postings API.
 
+    Paginates via limit/offset — a single `?limit=200` call was fine for
+    every company added so far (all well under 200 open reqs), but a
+    larger employer would silently truncate, so this loops until
+    `totalFound` is covered rather than assuming one page is everyone.
+
     The list endpoint carries no description text at all — SmartRecruiters
     only exposes that on the per-posting detail endpoint — so this fetches
     one extra request per listing, same tradeoff as Workday's optional
@@ -215,21 +229,34 @@ def fetch_smartrecruiters(client: httpx.Client, company: str):
     every description-based keyword boost would be starved for every listing
     from this source.
     """
-    url = f"https://api.smartrecruiters.com/v1/companies/{company}/postings?limit=200"
-    for job in _get(client, url).json().get("content", []):
-        job_id = job.get("id", "")
-        if not job_id:
-            continue
-        loc = job.get("location") or {}
-        yield {
-            "source": f"smartrecruiters:{company}",
-            "company": company,
-            "title": job.get("name", ""),
-            "location": loc.get("fullLocation") or ("Remote" if loc.get("remote") else ""),
-            "url": f"https://jobs.smartrecruiters.com/{company}/{job_id}",
-            "description": clean(_smartrecruiters_description(client, company, job_id)),
-            "posted_at": job.get("releasedDate"),
-        }
+    limit = 200
+    offset = 0
+    total = None
+    while total is None or offset < total:
+        url = (f"https://api.smartrecruiters.com/v1/companies/{company}/postings"
+               f"?limit={limit}&offset={offset}")
+        data = _get(client, url).json()
+        total = data.get("totalFound", 0)
+        content = data.get("content", [])
+        if not content:
+            return
+        for job in content:
+            job_id = job.get("id", "")
+            if not job_id:
+                continue
+            loc = job.get("location") or {}
+            dept = (job.get("department") or {}).get("label", "")
+            yield {
+                "source": f"smartrecruiters:{company}",
+                "company": company,
+                "title": job.get("name", ""),
+                "department": dept,
+                "location": loc.get("fullLocation") or ("Remote" if loc.get("remote") else ""),
+                "url": f"https://jobs.smartrecruiters.com/{company}/{job_id}",
+                "description": clean(_smartrecruiters_description(client, company, job_id)),
+                "posted_at": job.get("releasedDate"),
+            }
+        offset += len(content)
 
 
 def _smartrecruiters_description(client: httpx.Client, company: str, job_id: str) -> str:
@@ -253,6 +280,7 @@ def fetch_recruitee(client: httpx.Client, company: str):
             "source": f"recruitee:{company}",
             "company": job.get("company_name") or company,
             "title": job.get("title", ""),
+            "department": job.get("department", ""),
             "location": location,
             "url": job.get("careers_url", ""),
             "description": clean(job.get("description")),
@@ -275,6 +303,7 @@ def fetch_workable(client: httpx.Client, company: str):
             "source": f"workable:{company}",
             "company": company,
             "title": job.get("title", ""),
+            "department": job.get("department", ""),
             "location": location,
             "url": job.get("url", ""),
             "description": clean(job.get("description")),

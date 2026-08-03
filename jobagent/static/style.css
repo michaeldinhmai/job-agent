@@ -170,6 +170,7 @@ tbody tr:last-child td { border-bottom: none; }
 .badge.applied { background: var(--applied); }
 .badge.ignored { background: var(--ignored); }
 .badge.rejected { background: var(--rejected); }
+.badge.stale { background: #6b7280; }
 
 .status-select { font-size: 0.75rem; padding: 0.2rem 0.4rem; }
 

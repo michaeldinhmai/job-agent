@@ -145,6 +145,7 @@ def cmd_show(args) -> None:
         sys.exit(f"no listing with id {args.id}")
     print(f"{'title':>14}: {row['title']}")
     print(f"{'company':>14}: {row['company']}")
+    print(f"{'department':>14}: {row['department'] or '—'}")
     print(f"{'location':>14}: {row['location'] or '—'}")
     print(f"{'city':>14}: {row['city'] or '—'}")
     print(f"{'state':>14}: {row['state'] or '—'}")
