@@ -33,6 +33,13 @@ CASES = [
     ("San Francisco", "us"),           # bare city, no state or country
     ("New York City", "us"),
     ("Central - United States", "us"),
+    # A US city name abroad must not beat the named country. Found live:
+    # Workato listed a role across Mexico + "San Jose, Costa Rica" and the
+    # bare-city match made the whole posting read as US.
+    ("San Jose, Costa Rica", "elsewhere"),
+    ("Guadalajara, Jalisco, Mexico; San Jose, Costa Rica", "elsewhere"),
+    ("Birmingham, United Kingdom", "elsewhere"),
+    ("San Jose, CA", "us"),            # ...but the real one still resolves
     ("São Paulo", "elsewhere"),        # accented, names no country
     ("Sao Paulo", "elsewhere"),
     ("Mexico City", "elsewhere"),

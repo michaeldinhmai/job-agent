@@ -272,20 +272,29 @@ def classify(location: str | None) -> str:
         return "unknown"
     low = _fold(raw)
 
-    us = bool(COUNTRY_RE.search(raw)) or bool(ABBR_RE.search(raw))
-    if not us:
-        us = any(_word(state, low) for state in STATES) or any(
-            _word(city, low) for city in US_CITIES
-        ) or any(_word(region, low) for region in US_REGIONS)
-
+    # Strong = the posting actually names the country or a US state. Weak = a
+    # bare city or region name we recognize, which is a guess: plenty of US
+    # city names exist abroad ("San Jose, Costa Rica", "Birmingham, UK").
+    strong_us = (
+        bool(COUNTRY_RE.search(raw))
+        or bool(ABBR_RE.search(raw))
+        or any(_word(state, low) for state in STATES)
+    )
+    weak_us = any(_word(city, low) for city in US_CITIES) or any(
+        _word(region, low) for region in US_REGIONS
+    )
     elsewhere = any(_word(term, low) for term in ELSEWHERE)
 
-    if us:
-        # A US signal wins even alongside other countries ("US and Canada"),
-        # since the role is open to US applicants either way.
+    if strong_us:
+        # An explicit US signal wins even alongside other countries
+        # ("Remote - US and Canada"): the role is open to US applicants either way.
         return "us"
     if elsewhere:
+        # Ordering matters: a weak bare-city guess must NOT beat an explicitly
+        # named foreign country, or "San Jose, Costa Rica" reads as US.
         return "elsewhere"
+    if weak_us:
+        return "us"
     if any(_word(term, low) for term in GLOBAL_OK):
         return "us"
     return "unknown"
