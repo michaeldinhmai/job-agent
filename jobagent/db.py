@@ -163,7 +163,14 @@ class JobRepository:
         sql = "SELECT * FROM jobs WHERE 1=1"
         params: list = []
         if min_score is not None:
-            sql += " AND score >= ?"
+            # A listing you've already engaged with is never hidden by a score
+            # threshold. You apply to things the rules would reject — a role
+            # outside the commute radius, a referral, a reach — and losing
+            # track of what you applied to is far worse than a couple of extra
+            # rows. Without this, filtering the dashboard by status='applied'
+            # returns nothing at all, since the default score filter is ANDed
+            # with it.
+            sql += " AND (score >= ? OR status IN ('shortlist', 'applied'))"
             params.append(min_score)
         if status:
             sql += " AND status = ?"

@@ -288,6 +288,57 @@ def fetch_recruitee(client: httpx.Client, company: str):
         }
 
 
+def fetch_comeet(client: httpx.Client, name: str, uid: str, token: str):
+    """Comeet's public careers API.
+
+    `uid` and `token` are the per-company values a Comeet customer embeds in
+    its own public careers page (`COMEET.init({...})` in the page source) —
+    public widget identifiers, not credentials, the same role a Greenhouse
+    board slug plays.
+
+    Two quirks, both found live against a real board rather than assumed:
+
+    1. `&details=true` on the LIST endpoint is the only way to get
+       description text in bulk. The per-position detail endpoint returns an
+       empty `details` list, so the obvious "fetch each posting" approach
+       silently yields no descriptions at all.
+    2. A posting open in several cities appears once PER LOCATION, and every
+       copy shares the same `url_active_page`. Keying on that would collapse
+       them to one row under the url-unique constraint and arbitrarily drop
+       the rest — so the per-location `url_comeet_hosted_page` is used
+       instead, which is distinct (`18.767` vs `18.767-9B.20A`). That
+       matters: it's exactly how a same-req-different-city listing stays
+       visible.
+    """
+    url = (f"https://www.comeet.co/careers-api/2.0/company/{uid}"
+           f"/positions?token={token}&details=true")
+    for job in _get(client, url).json():
+        if job.get("is_internal"):
+            continue
+        loc = job.get("location") or {}
+        remote = job.get("workplace_type") == "Remote" or loc.get("is_remote")
+        if remote:
+            location = f"Remote - {loc.get('country') or ''}".strip(" -")
+        else:
+            location = ", ".join(
+                p for p in (loc.get("city"), loc.get("state"), loc.get("country")) if p
+            ) or (loc.get("name") or "")
+        # `details` blocks are {name, value}; value is None on empty sections.
+        body = " ".join(
+            b.get("value") or "" for b in (job.get("details") or [])
+        )
+        yield {
+            "source": f"comeet:{name}",
+            "company": job.get("company_name") or name,
+            "title": job.get("name", ""),
+            "department": job.get("department") or "",
+            "location": location,
+            "url": job.get("url_comeet_hosted_page", ""),
+            "description": clean(body),
+            "posted_at": job.get("time_updated"),
+        }
+
+
 def fetch_workable(client: httpx.Client, company: str):
     """`?details=true` is what actually puts a description on each job — the
     plain widget endpoint the docs advertise omits it entirely."""
@@ -408,6 +459,11 @@ def fetch_all(config: dict, only: str | None = None):
         plan.append((f"recruitee:{company}", lambda c, x=company: fetch_recruitee(c, x)))
     for company in src.get("workable", []):
         plan.append((f"workable:{company}", lambda c, x=company: fetch_workable(c, x)))
+    for cm in src.get("comeet", []):
+        plan.append(
+            (f"comeet:{cm['name']}",
+             lambda c, m=cm: fetch_comeet(c, m["name"], m["uid"], m["token"]))
+        )
     if src.get("remoteok"):
         plan.append(("remoteok", fetch_remoteok))
     himalayas = src.get("himalayas")
