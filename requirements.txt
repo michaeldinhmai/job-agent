@@ -3,7 +3,7 @@ httpx>=0.28.1
 flask>=3.1
 
 # `tailor` / `autotailor` read and write .docx resumes.
-python-docx>=1.1
+python-docx>=1.2.0
 
 # Browser automation for the apply-flow adapters (greenhouse, ashby, workday,
 # icims). The package alone isn't enough — it also needs a browser binary:
