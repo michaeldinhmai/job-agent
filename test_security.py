@@ -120,6 +120,25 @@ def _status_whitelist():
 
 # ---------- exposure ----------
 
+@check("a missing config doesn't leak the filesystem path over HTTP")
+def _no_path_in_error():
+    real = webapp.cli.load_config
+    secret_path = Path("/home/someone/private/job-agent/config.json")
+    webapp.cli.load_config = lambda *a, **k: sys.exit(f"missing {secret_path} — copy ...")
+    try:
+        with webapp.app.app_context():   # jsonify() needs one
+            _, err = webapp._safe_load_config()
+        assert err is not None, "expected an error tuple"
+        body, status = err
+        text = body.get_json()["error"]
+        assert status == 400, status
+        assert str(secret_path) not in text, f"path leaked: {text}"
+        assert "someone" not in text, f"path leaked: {text}"
+        assert "config.json" in text, "message should still be actionable"
+    finally:
+        webapp.cli.load_config = real
+
+
 @check("dashboard binds to loopback, not 0.0.0.0")
 def _binds_loopback():
     src = inspect.getsource(webapp.main)

@@ -80,8 +80,15 @@ def _safe_load_config() -> tuple[dict | None, tuple | None]:
     return directly from the caller."""
     try:
         return cli.load_config(), None
-    except SystemExit as e:
-        return None, (jsonify({"error": str(e)}), 400)
+    except SystemExit:
+        # Deliberately not str(e): load_config()'s message embeds the absolute
+        # path of config.json, and there's no reason to hand a filesystem
+        # layout to an HTTP response. The full message still reaches the CLI,
+        # which is where it's actually useful.
+        return None, (jsonify({
+            "error": "config.json not found — copy config.example.json to "
+                     "config.json and edit it for your own search",
+        }), 400)
 
 
 def _run_cli(*args: str, timeout: int = 120) -> dict:
