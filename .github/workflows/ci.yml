@@ -47,6 +47,9 @@ jobs:
       - name: Source adapters
         run: python test_sources.py
 
+      - name: CLI (parsing, routing, commands)
+        run: python test_cli.py
+
       - name: Security regressions (CSRF / SQL / exposure)
         run: python test_security.py
 

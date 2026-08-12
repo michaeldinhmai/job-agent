@@ -193,7 +193,7 @@ jobagent/
 config.example.json  profile.example.json  variants.example.json  digest.bat
 test_matcher.py  test_locations.py            (run after rule changes)
 test_salary.py   test_sources.py              (parser; 11 adapters, offline)
-test_security.py test_xss.js                  (CSRF/SQL guards; XSS guards)
+test_cli.py      test_security.py test_xss.js (CLI; CSRF/SQL; XSS guards)
 tests/fixtures/                               (recorded API responses)
 .github/workflows/                            (CI + CodeQL, run on every push)
 config.json  profile.json  variants.json      (your local copies, git-ignored)
