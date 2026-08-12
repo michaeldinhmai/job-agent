@@ -1,0 +1,68 @@
+{
+ "totalFound": 4,
+ "content": [
+  {
+   "id": "743999706414750",
+   "name": "Pricing Analyst",
+   "uuid": "29c1a2f0-8398-4654-ae21-8bb05df2665a",
+   "jobAdId": "411338b2-0041-4f62-adf2-216beb926bfa",
+   "defaultJobAd": true,
+   "refNumber": "REF43N",
+   "company": {
+    "identifier": "AutomationAnywhere1",
+    "name": "Automation Anywhere"
+   },
+   "releasedDate": "2020-02-06T19:42:44.000Z",
+   "location": {
+    "city": "San Jose",
+    "region": "CA",
+    "country": "us",
+    "address": "1060 Rincon Circle",
+    "postalCode": "95131",
+    "remote": false,
+    "hybrid": false,
+    "latitude": "37.3985718",
+    "longitude": "-121.91130900000002",
+    "fullLocation": "San Jose, CA, United States"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {},
+   "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "us",
+     "valueLabel": "United States"
+    },
+    {
+     "fieldId": "5c6daa35b1f60b480398a0b7",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Automation Anywhere"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/AutomationAnywhere1/postings/743999706414750",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  }
+ ]
+}

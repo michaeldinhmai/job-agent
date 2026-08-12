@@ -1,0 +1,22 @@
+{
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>Automation Anywhere is the leader in Robotic Process Automation (RPA), the platform on which more organizations build world-class Intelligent Digital Workforces. Automation Anywhere’s enterprise-grade platform uses software bots that work side by side with people to do much of the repetitive work in many industries. It combines sophisticated RPA, cognitive and embedded analytic technologies. Over 1,100 organizations use this AI-enabled solution to manage and scale business processes faster, with near-zero error rates, while dramatically reducing operational costs. Automation Anywhere provid"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p>Pricing analysts work with complex data sets to help businesses determine and set competitive prices to gain market share and achieve revenue goals. This is a highly analytical role that requires pricing analysts to consider data from multiple sources and develop complex pricing models that reflect margins for promotional and seasonal pricing based on competitor, market, and customer data.</p><p>Pricing analysts work in a variety of fields, including retail and business-to-business (B2B) sales. In any setting, pricing analysts collaborate with sales and marketing teams to develop strategies"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": ""
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p>All your information will be kept confidential according to EEO guidelines.</p>"
+   }
+  }
+ }
+}

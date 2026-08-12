@@ -39,6 +39,14 @@ jobs:
       - name: Location classifier
         run: python test_locations.py
 
+      - name: Salary parser
+        run: python test_salary.py
+
+      # Hermetic: served from recorded fixtures via httpx MockTransport, so a
+      # third party changing their API can't turn CI red on an unrelated PR.
+      - name: Source adapters
+        run: python test_sources.py
+
       - name: Security regressions (CSRF / SQL / exposure)
         run: python test_security.py
 

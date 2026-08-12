@@ -4,15 +4,32 @@
 [![CodeQL](https://github.com/michaeldinhmai/job-agent/actions/workflows/codeql.yml/badge.svg)](https://github.com/michaeldinhmai/job-agent/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A job-search pipeline. It discovers listings from public job-board APIs,
-ranks them against rules you define, tailors a resume per listing, and
-pre-fills application forms — **while a human reviews and submits every
-application**.
+**Eleven job-source integrations normalized into one schema, with a human in
+the loop before anything goes out.**
 
-Everything that's specific to *you* (search targets, resume content, contact
-info, career-track taxonomy) lives in a handful of gitignored local files —
-see [Configuration](#configuration) below. The code and the `.example.json`
-templates are the reusable part; your own copies never get pushed anywhere.
+Discovery pulls from eight ATS APIs — Greenhouse, Lever, Ashby, Workday,
+SmartRecruiters, Recruitee, Workable and Comeet — plus RSS feeds, RemoteOK
+and Himalayas. Every response is normalized into one record shape
+(`title, department, location, remote, salary, posted_at, apply_url, …`),
+ranked against rules you define, and used to tailor a resume per listing and
+pre-fill the application form. Four of those platforms (Greenhouse, Ashby,
+Workday, iCIMS) also have browser adapters for the apply step.
+
+**A human reviews and submits every application.** That boundary is
+deliberate design, not a missing feature — an application goes out under a
+real name.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/dashboard-dark.png">
+  <img alt="job-agent dashboard: ranked matches showing match score, parsed salary, normalized location, status and source ATS for each listing" src="docs/dashboard-light.png">
+</picture>
+
+The local dashboard: every listing ranked and explainable, salary parsed out
+of the description text, location normalized across sources, and the
+originating ATS shown per row. Everything specific to *you* — search targets,
+resume content, contact info — lives in gitignored local files
+(see [Configuration](#configuration)); the code and `.example.json` templates
+are the reusable part.
 
 ![Pipeline flow: automated steps in teal, manual steps in purple](docs/flow.svg)
 
@@ -175,7 +192,9 @@ jobagent/
   greenhouse.py  ashby.py  workday.py  icims.py             autotailor.py
 config.example.json  profile.example.json  variants.example.json  digest.bat
 test_matcher.py  test_locations.py            (run after rule changes)
+test_salary.py   test_sources.py              (parser; 11 adapters, offline)
 test_security.py test_xss.js                  (CSRF/SQL guards; XSS guards)
+tests/fixtures/                               (recorded API responses)
 .github/workflows/                            (CI + CodeQL, run on every push)
 config.json  profile.json  variants.json      (your local copies, git-ignored)
 jobs.db  reports/  logs/  resume/  auth/       (local artifacts, git-ignored)

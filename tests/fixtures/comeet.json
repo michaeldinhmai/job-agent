@@ -1,0 +1,116 @@
+[
+ {
+  "name": "Forward Deployed Engineer",
+  "department": null,
+  "email": "wiliot.18.767@applynow.io",
+  "email_alias": null,
+  "url_comeet_hosted_page": "https://www.comeet.com/jobs/wiliot/F6.003/forward-deployed-engineer/18.767",
+  "url_recruit_hosted_page": "https://www.comeet.com/jobs/wiliot/F6.003/forward-deployed-engineer/18.767",
+  "url_active_page": "https://www.wiliot.com/positions/position-18_767",
+  "employment_type": null,
+  "experience_level": null,
+  "uid": "18.767",
+  "location": {
+   "name": "New York",
+   "country": "US",
+   "city": "New York",
+   "state": "NY",
+   "postal_code": "",
+   "street_name": "Wiliot at WeWork 524 Broadway, 11th Floor, NY 10012",
+   "arrival_instructions": null,
+   "street_number": "",
+   "timezone": "America/New_York",
+   "location_uid": "C5.402",
+   "is_remote": false
+  },
+  "internal_use_custom_id": null,
+  "is_consent_needed": true,
+  "is_sms_consent_needed": false,
+  "referrals_reward": null,
+  "is_reward": false,
+  "is_company_reward": true,
+  "company_referrals_reward": "10,000 ILS",
+  "url_detected_page": "https://www.wiliot.com/positions/position-18_767",
+  "picture_url": null,
+  "time_updated": "2026-08-12T02:36:49Z",
+  "company_name": "Wiliot",
+  "is_internal": false,
+  "linkedin_job_posting_id": null,
+  "workplace_type": "On-site",
+  "position_url": "https://www.comeet.co/careers-api/2.0/company/F6.003/positions/18.767?token=6F329B2DE6379829B229B2037983E8B3E8B",
+  "details": [
+   {
+    "name": "Description",
+    "value": "<p>Wiliot was founded by the team that invented one of the technologies at the heart of 5G.&nbsp;Their next vision was to develop an IoT sticker, a computing element that can power itself by harvesting radio frequency energy, bringing connectivity and intelligence to everyday products and packaging, things previously disconnect from the IoT. This revolutionary mixture of cloud and semiconductor technology is being used by some of the world’s largest consumer, retail, food and pharmaceutical companies to change the way we make, distribute, sell, use and recycle products.</p><p>Our investors inc",
+    "order": 1
+   },
+   {
+    "name": "Responsibilities",
+    "value": null,
+    "order": 2
+   },
+   {
+    "name": "Requirements",
+    "value": "<p><br></p><p>&nbsp;</p>",
+    "order": 3
+   }
+  ]
+ },
+ {
+  "name": "Forward Deployed Engineer",
+  "department": null,
+  "email": "wiliot.18.767-9B.20A@applynow.io",
+  "email_alias": null,
+  "url_comeet_hosted_page": "https://www.comeet.com/jobs/wiliot/F6.003/forward-deployed-engineer/18.767-9B.20A",
+  "url_recruit_hosted_page": "https://www.comeet.com/jobs/wiliot/F6.003/forward-deployed-engineer/18.767-9B.20A",
+  "url_active_page": "https://www.wiliot.com/positions/position-18_767",
+  "employment_type": null,
+  "experience_level": null,
+  "uid": "18.767-9B.20A",
+  "location": {
+   "name": "Dallas",
+   "country": "US",
+   "city": "Plano",
+   "state": "TX",
+   "postal_code": "75093",
+   "street_name": "Lucid Private Offices 6275 West Plano Parkway, STE 500 Plano, TX 75093",
+   "arrival_instructions": "<p><br/></p>",
+   "street_number": "6600",
+   "timezone": "America/Chicago",
+   "location_uid": "9B.20A",
+   "is_remote": false
+  },
+  "internal_use_custom_id": null,
+  "is_consent_needed": true,
+  "is_sms_consent_needed": false,
+  "referrals_reward": null,
+  "is_reward": false,
+  "is_company_reward": true,
+  "company_referrals_reward": "10,000 ILS",
+  "url_detected_page": "https://www.wiliot.com/positions/position-18_767",
+  "picture_url": null,
+  "time_updated": "2026-08-12T02:36:49Z",
+  "company_name": "Wiliot",
+  "is_internal": false,
+  "linkedin_job_posting_id": null,
+  "workplace_type": "On-site",
+  "position_url": "https://www.comeet.co/careers-api/2.0/company/F6.003/positions/18.767-9B.20A?token=6F329B2DE6379829B229B2037983E8B3E8B",
+  "details": [
+   {
+    "name": "Description",
+    "value": "<p>Wiliot was founded by the team that invented one of the technologies at the heart of 5G.&nbsp;Their next vision was to develop an IoT sticker, a computing element that can power itself by harvesting radio frequency energy, bringing connectivity and intelligence to everyday products and packaging, things previously disconnect from the IoT. This revolutionary mixture of cloud and semiconductor technology is being used by some of the world’s largest consumer, retail, food and pharmaceutical companies to change the way we make, distribute, sell, use and recycle products.</p><p>Our investors inc",
+    "order": 1
+   },
+   {
+    "name": "Responsibilities",
+    "value": null,
+    "order": 2
+   },
+   {
+    "name": "Requirements",
+    "value": "<p><br></p><p>&nbsp;</p>",
+    "order": 3
+   }
+  ]
+ }
+]

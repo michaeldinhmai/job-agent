@@ -1,0 +1,190 @@
+{
+ "totalFound": 4,
+ "content": [
+  {
+   "id": "743999706414750",
+   "name": "Pricing Analyst",
+   "uuid": "29c1a2f0-8398-4654-ae21-8bb05df2665a",
+   "jobAdId": "411338b2-0041-4f62-adf2-216beb926bfa",
+   "defaultJobAd": true,
+   "refNumber": "REF43N",
+   "company": {
+    "identifier": "AutomationAnywhere1",
+    "name": "Automation Anywhere"
+   },
+   "releasedDate": "2020-02-06T19:42:44.000Z",
+   "location": {
+    "city": "San Jose",
+    "region": "CA",
+    "country": "us",
+    "address": "1060 Rincon Circle",
+    "postalCode": "95131",
+    "remote": false,
+    "hybrid": false,
+    "latitude": "37.3985718",
+    "longitude": "-121.91130900000002",
+    "fullLocation": "San Jose, CA, United States"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {},
+   "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "us",
+     "valueLabel": "United States"
+    },
+    {
+     "fieldId": "5c6daa35b1f60b480398a0b7",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Automation Anywhere"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/AutomationAnywhere1/postings/743999706414750",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  },
+  {
+   "id": "743999706405540",
+   "name": "Sr. Sales Executive  (4418)",
+   "uuid": "172646f2-62d0-404f-805b-18d5b16b48d1",
+   "jobAdId": "49170dd9-128c-4c0a-ba9c-e54aeaad92a7",
+   "defaultJobAd": true,
+   "refNumber": "REF42Z",
+   "company": {
+    "identifier": "AutomationAnywhere1",
+    "name": "Automation Anywhere"
+   },
+   "releasedDate": "2020-02-06T18:23:10.000Z",
+   "location": {
+    "city": "Los Angeles",
+    "region": "CA",
+    "country": "us",
+    "address": "xxxx",
+    "postalCode": "90001",
+    "remote": false,
+    "hybrid": false,
+    "fullLocation": "Los Angeles, CA, United States"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {},
+   "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "us",
+     "valueLabel": "United States"
+    },
+    {
+     "fieldId": "5c6daa35b1f60b480398a0b7",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Automation Anywhere"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/AutomationAnywhere1/postings/743999706405540",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  },
+  {
+   "id": "743999704892584",
+   "name": "Strategic Account Manager/Senior Account Executive - Seattle  (4120)",
+   "uuid": "e5aa06ea-bc05-470d-8cd7-9c8ce5394176",
+   "jobAdId": "96d84259-6df3-40aa-91b8-4d297a53317f",
+   "defaultJobAd": true,
+   "refNumber": "REF41K",
+   "company": {
+    "identifier": "AutomationAnywhere1",
+    "name": "Automation Anywhere"
+   },
+   "releasedDate": "2020-01-21T21:03:44.000Z",
+   "location": {
+    "city": "Seattle",
+    "region": "WA",
+    "country": "us",
+    "address": "xx seattle, wa",
+    "postalCode": "98101",
+    "remote": false,
+    "hybrid": false,
+    "fullLocation": "Seattle, WA, United States"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {},
+   "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior Level"
+   },
+   "customField": [
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "us",
+     "valueLabel": "United States"
+    },
+    {
+     "fieldId": "5c6daa35b1f60b480398a0b7",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "Automation Anywhere"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/AutomationAnywhere1/postings/743999704892584",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  }
+ ]
+}

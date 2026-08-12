@@ -1,0 +1,66 @@
+{
+ "jobs": [
+  {
+   "id": "558f18ed-c98c-4928-aa2b-2f9e297eea42",
+   "title": "Open Application",
+   "department": "All Teams",
+   "team": "All Teams",
+   "employmentType": "FullTime",
+   "location": "Remote: United States",
+   "secondaryLocations": [
+    {
+     "location": "Remote: Canada",
+     "address": {
+      "postalAddress": {
+       "addressCountry": "Canada"
+      }
+     }
+    }
+   ],
+   "publishedAt": "2026-02-04T01:45:22.580+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "address": {
+    "postalAddress": {
+     "addressCountry": "United States"
+    }
+   },
+   "jobUrl": "https://jobs.ashbyhq.com/render/558f18ed-c98c-4928-aa2b-2f9e297eea42",
+   "applyUrl": "https://jobs.ashbyhq.com/render/558f18ed-c98c-4928-aa2b-2f9e297eea42/application",
+   "descriptionHtml": "<p style=\"min-height:1.5em\">At Render, we’re building the modern cloud platform for developers creating AI-native, full-stack, multi-service applications. Our mission is to eliminate the tradeoff between the power of hyperscalers and the simplicity of developer-friendly platforms—so teams can ship fast, scale reliably, and focus on their product, not infrastructure.</p><p style=\"min-height:1.5em\">Unlike complex hyperscalers or ephemeral edge/serverless solutions, Render offers a developer-first experience with persistent compute, dynamic autoscaling, built-in orchestration, and observability, ",
+   "descriptionPlain": "At Render, we’re building the modern cloud platform for developers creating AI-native, full-stack, multi-service applications. Our mission is to eliminate the tradeoff between the power of hyperscalers and the simplicity of developer-friendly platforms—so teams can ship fast, scale reliably, and focus on their product, not infrastructure.\n\nUnlike complex hyperscalers or ephemeral edge/serverless solutions, Render offers a developer-first experience with persistent compute, dynamic autoscaling, built-in orchestration, and observability, allowing teams to launch, scale, and manage real-world app"
+  },
+  {
+   "id": "c7d896f2-20a9-4b44-9f7d-13929a0fe453",
+   "title": "Software Engineer, Product (all levels)",
+   "department": "Engineering",
+   "team": "Engineering",
+   "employmentType": "FullTime",
+   "location": "Remote: United States",
+   "secondaryLocations": [
+    {
+     "location": "Remote: Canada",
+     "address": {
+      "postalAddress": {
+       "addressCountry": "Canada"
+      }
+     }
+    }
+   ],
+   "publishedAt": "2025-07-10T18:08:57.261+00:00",
+   "isListed": true,
+   "isRemote": true,
+   "workplaceType": "Remote",
+   "address": {
+    "postalAddress": {
+     "addressCountry": "United States"
+    }
+   },
+   "jobUrl": "https://jobs.ashbyhq.com/render/c7d896f2-20a9-4b44-9f7d-13929a0fe453",
+   "applyUrl": "https://jobs.ashbyhq.com/render/c7d896f2-20a9-4b44-9f7d-13929a0fe453/application",
+   "descriptionHtml": "<p style=\"min-height:1.5em\">At Render, we’re building the modern cloud platform for developers creating AI-native, full-stack, multi-service applications. Our mission is to eliminate the tradeoff between the power of hyperscalers and the simplicity of developer-friendly platforms—so teams can ship fast, scale reliably, and focus on their product, not infrastructure.</p><p style=\"min-height:1.5em\">Unlike complex hyperscalers or ephemeral edge/serverless solutions, Render offers a developer-first experience with persistent compute, dynamic autoscaling, built-in orchestration, and observability, ",
+   "descriptionPlain": "At Render, we’re building the modern cloud platform for developers creating AI-native, full-stack, multi-service applications. Our mission is to eliminate the tradeoff between the power of hyperscalers and the simplicity of developer-friendly platforms—so teams can ship fast, scale reliably, and focus on their product, not infrastructure.\n\nUnlike complex hyperscalers or ephemeral edge/serverless solutions, Render offers a developer-first experience with persistent compute, dynamic autoscaling, built-in orchestration, and observability, allowing teams to launch, scale, and manage real-world app"
+  }
+ ]
+}
