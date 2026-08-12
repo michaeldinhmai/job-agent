@@ -1,2 +1,11 @@
+# Core: fetching listings + the local dashboard.
 httpx>=0.27
 flask>=3.1
+
+# `tailor` / `autotailor` read and write .docx resumes.
+python-docx>=1.1
+
+# Browser automation for the apply-flow adapters (greenhouse, ashby, workday,
+# icims). The package alone isn't enough — it also needs a browser binary:
+#     playwright install chromium
+playwright>=1.44

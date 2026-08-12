@@ -1,5 +1,9 @@
 # job-agent
 
+[![CI](https://github.com/michaeldinhmai/job-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/michaeldinhmai/job-agent/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/michaeldinhmai/job-agent/actions/workflows/codeql.yml/badge.svg)](https://github.com/michaeldinhmai/job-agent/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A job-search pipeline. It discovers listings from public job-board APIs,
 ranks them against rules you define, tailors a resume per listing, and
 pre-fills application forms — **while a human reviews and submits every
@@ -170,7 +174,9 @@ jobagent/
   applyflow.py   shared apply machinery        resume.py   docx read + gap report
   greenhouse.py  ashby.py  workday.py  icims.py             autotailor.py
 config.example.json  profile.example.json  variants.example.json  digest.bat
-test_matcher.py  test_locations.py            (run both after rule changes)
+test_matcher.py  test_locations.py            (run after rule changes)
+test_security.py test_xss.js                  (CSRF/SQL guards; XSS guards)
+.github/workflows/                            (CI + CodeQL, run on every push)
 config.json  profile.json  variants.json      (your local copies, git-ignored)
 jobs.db  reports/  logs/  resume/  auth/       (local artifacts, git-ignored)
 TODO.md  docs/outreach-playbook.md             (your own notes, git-ignored)

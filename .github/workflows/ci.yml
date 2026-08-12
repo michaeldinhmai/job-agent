@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Least privilege: nothing here needs to write to the repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Installing the full requirements file (rather than just what the
+      # tests import) is deliberate: it verifies the declared dependencies
+      # actually resolve, which is the check that would have caught
+      # python-docx and playwright missing from the list.
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # These run against a fixture config and temp databases — config.json
+      # and jobs.db are git-ignored and absent here, which is the point.
+      - name: Matching rules
+        run: python test_matcher.py
+
+      - name: Location classifier
+        run: python test_locations.py
+
+      - name: Security regressions (CSRF / SQL / exposure)
+        run: python test_security.py
+
+      # node is preinstalled on ubuntu-latest.
+      - name: XSS guards
+        run: node test_xss.js
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      # Fails the job if a declared dependency has a known CVE.
+      - name: Audit dependencies for known vulnerabilities
+        run: pip-audit --requirement requirements.txt --strict
