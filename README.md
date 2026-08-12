@@ -187,3 +187,9 @@ TODO.md  docs/outreach-playbook.md             (your own notes, git-ignored)
   adapter's QUESTION_RULES.
 - **Scheduled task**: `schtasks /query /tn "job-agent daily digest"`; output
   logs to `logs/digest.log`. Runs only while logged in; missed days catch up.
+
+## License
+
+[MIT](LICENSE) — use it, fork it, change it. Your own config, profile, and
+notes stay yours: they're git-ignored, and only the `.example.json` templates
+are tracked here.
