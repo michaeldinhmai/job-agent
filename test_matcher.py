@@ -51,6 +51,14 @@ CASES = [
     ("Account Executive, Enterprise", "", True),
     # Soft title tier (titles.include_needs_technical_signal): a generic
     # post-sale title only passes with a technical-signal keyword hit.
+]
+
+# Soft-tier behaviour (titles.include_needs_technical_signal): an ambiguous
+# business title passes only when a technical signal also appears. Split out
+# from CASES because the tier is optional — a config that leaves it empty is
+# making a deliberate strategy choice, not regressing. Run against the fixture
+# (which configures the tier) always; against a real config only if it uses it.
+SOFT_TIER_CASES = [
     ("Customer Success Manager",
      "Owns the technical relationship, leads API integration and configuration reviews.",
      False),
@@ -62,10 +70,10 @@ CASES = [
 ]
 
 
-def run(config: dict, label: str) -> int:
+def run(config: dict, label: str, cases=None) -> int:
     print(f"--- {label} ---")
     failures = 0
-    for title, description, should_reject in CASES:
+    for title, description, should_reject in (cases if cases is not None else CASES):
         job = {"title": title, "description": description, "location": "Remote - US"}
         score, why = matcher.score(job, config)
         rejected = score < 0
@@ -78,6 +86,7 @@ def run(config: dict, label: str) -> int:
 
 def main() -> int:
     failures = run(FIXTURE, "fixture config")
+    failures += run(FIXTURE, "fixture config — soft title tier", SOFT_TIER_CASES)
 
     # Second pass against the real config when one exists — catches a live
     # rule change that breaks an assumption these cases encode. Skipped on a
@@ -86,6 +95,12 @@ def main() -> int:
         real = json.loads(REAL_CONFIG_PATH.read_text(encoding="utf-8"))
         print()
         failures += run(real, "your config.json")
+        if real.get("titles", {}).get("include_needs_technical_signal"):
+            print()
+            failures += run(real, "your config.json — soft title tier", SOFT_TIER_CASES)
+        else:
+            print("\n(your config.json has an empty soft title tier — "
+                  "those 4 cases apply to the fixture only)")
     else:
         print("\n(no config.json — fixture pass only)")
 

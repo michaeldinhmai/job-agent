@@ -17,13 +17,16 @@ TITLE_HIT = 10
 LOCATION_HIT = 3
 
 # Display-only normalization of the raw additive score to a 0-100 scale.
-# 20 was picked as the reference ceiling from the live score distribution
-# (2026-07-30: max observed 20, config min_score threshold 10 -> 50/100,
-# p90 14 -> 70/100) — it's a display convenience, not a new scoring model.
-# The raw `score` field remains the one config.json's min_score and all
-# comparisons actually operate on; adjust SCORE_SCALE_MAX here if the live
-# distribution shifts (e.g. after adding more boost keywords).
-SCORE_SCALE_MAX = 20
+# It's a display convenience, not a new scoring model: the raw `score` field
+# remains the one config.json's min_score and all comparisons operate on.
+# Recalibrate whenever the live distribution shifts — e.g. after adding boost
+# keywords — or the top of the range flattens into an indistinguishable band
+# of 100/100.
+#   2026-07-30: 20, from max observed 20, min_score 10 -> 50/100, p90 14 -> 70/100.
+#   2026-08-12: 28, after role-priority boosts moved the ceiling. At 20, the top
+#               25 of 75 matches all clamped to 100/100 — the entire top third
+#               was unrankable on screen. Live now: max 28, p50 17, p95 23.
+SCORE_SCALE_MAX = 28
 
 
 def to_percent(score: int) -> int:
