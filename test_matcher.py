@@ -58,6 +58,11 @@ CASES = [
     ("Sales Engineer Enablement Manager", "", True),
     ("Manager, Solutions Consultant", "", True),
     ("Solutions Consultant", "", False),
+    # "management" is a subject-matter word, not a people-management signal.
+    # Excluding it rejected an insurance-vertical role, which is the opposite
+    # of what this search wants — see _exclude_outside_match_notes.
+    ("Sales Engineer - Insurance & Asset Management", "", False),
+    ("Solutions Consultant, Vulnerability Management", "", False),
 ]
 
 # Soft-tier behaviour (titles.include_needs_technical_signal): an ambiguous

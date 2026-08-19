@@ -36,6 +36,8 @@ CASES = [
     # A US city name abroad must not beat the named country. Found live:
     # Workato listed a role across Mexico + "San Jose, Costa Rica" and the
     # bare-city match made the whole posting read as US.
+    ("Remote - Worldwide", "us"),        # Torre's remote_anywhere shape
+    ("Remote - Anywhere", "us"),
     ("San Jose, Costa Rica", "elsewhere"),
     ("Guadalajara, Jalisco, Mexico; San Jose, Costa Rica", "elsewhere"),
     ("Birmingham, United Kingdom", "elsewhere"),

@@ -226,8 +226,16 @@ def parse_us_location(location: str | None) -> tuple[str | None, str | None, str
 
     country = None
     fold_raw = _fold(raw)
+    # A globally-open role ("Worldwide", "Anywhere", "North America") is
+    # workable from the US, and classify() already returns "us" for these.
+    # parse_us_location has to agree, or remote_label() yields nothing and a
+    # remote-or-local gate rejects the posting as though it were on-site —
+    # the two functions disagreeing is the bug, not either one alone. Only
+    # when no other country is named: "Europe, Worldwide" is not US.
+    globally_open = (any(_word(g, fold_raw) for g in GLOBAL_OK)
+                     and not any(_word(e, fold_raw) for e in ELSEWHERE))
     if (state or city or COUNTRY_RE.search(raw) or ABBR_RE.search(raw)
-            or any(_word(r, fold_raw) for r in US_REGIONS)):
+            or any(_word(r, fold_raw) for r in US_REGIONS) or globally_open):
         country = "United States"
     else:
         for name, code in COUNTRY_CODES.items():
