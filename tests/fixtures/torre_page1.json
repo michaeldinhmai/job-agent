@@ -1,0 +1,400 @@
+{
+ "total": 1625,
+ "size": 3,
+ "results": [
+  {
+   "id": "qdP9pPKr",
+   "objective": "Senior Solutions Delivery Engineer- DevOps",
+   "slug": "sonatype-senior-solutions-delivery-engineer-devops",
+   "tagline": "You will lead secure software delivery by optimizing open source innovation for global enterprises.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 751982,
+     "hashedId": "LoXv6R7q",
+     "name": "Sonatype",
+     "status": "approved",
+     "size": 524,
+     "publicId": "Sonatype",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1769105707/origin/bio/crawled-organizations/sonatype_logo_skqbt4.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [
+    "United States"
+   ],
+   "timezones": null,
+   "remote": true,
+   "external": true,
+   "deadline": "2026-08-27T19:45:11.000Z",
+   "created": "2026-08-11T10:47:03.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "externalApplicationUrl": "https://jobs.lever.co/sonatype/83cc47d4-e93e-4ce3-b440-185839cddaa1",
+   "compensation": {
+    "data": {
+     "code": "to-be-agreed",
+     "currency": "USD",
+     "minAmount": 0.0,
+     "minHourlyUSD": 0.0,
+     "maxAmount": 0.0,
+     "maxHourlyUSD": 0.0,
+     "periodicity": "monthly",
+     "negotiable": false,
+     "conversionRateUSD": 1.0
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "AWS",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Bash",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "CI/CD",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Cloud engineering",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "DevOps",
+     "experience": "potential-to-develop",
+     "proficiency": "expert"
+    },
+    {
+     "name": "Google Cloud Platform (GCP)",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Groovy",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Helm",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Microsoft Azure",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Orchestration",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Python",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "SDLC (Software development life cycle)",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Software security",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "YAML Ain't Markup Language (YAML)",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": false,
+    "timezone": false,
+    "locationType": "remote_countries",
+    "location": [
+     {
+      "id": "United States",
+      "timezone": -5.0,
+      "countryCode": "US",
+      "latitude": 38.7945952,
+      "longitude": -106.5348379
+     }
+    ]
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential"
+   ],
+   "quickApply": true,
+   "finishedApplications": null
+  },
+  {
+   "id": "ldEoj61W",
+   "objective": "Manager, Solutions Engineering | SEMEA | Remote",
+   "slug": "grafana-labs-manager-solutions-engineering-semea-remote-1",
+   "tagline": "You'll lead regional observability growth by mentoring high-performing teams and driving innovation.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 732594,
+     "hashedId": "bopA9avG",
+     "name": "Grafana Labs",
+     "status": "approved",
+     "size": 1,
+     "publicId": "GrafanaLabs",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1785226802/origin/bio/crawled-organizations/grafana_labs_logo_aptwks.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [
+    "Israel"
+   ],
+   "timezones": null,
+   "remote": true,
+   "external": true,
+   "deadline": "2026-08-28T01:45:14.000Z",
+   "created": "2026-08-10T02:46:27.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "externalApplicationUrl": "https://job-boards.greenhouse.io/grafanalabs/jobs/6121609004",
+   "compensation": {
+    "data": {
+     "code": "range",
+     "currency": "ILS",
+     "minAmount": 723000.0,
+     "minHourlyUSD": 127.42843703575863,
+     "maxAmount": 867000.0,
+     "maxHourlyUSD": 152.8083747026317,
+     "periodicity": "yearly",
+     "negotiable": false,
+     "conversionRateUSD": 0.3371441864542209
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "Cloud computing",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Component Object Model (COM)",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Customer success",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Data visualization",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Grafana",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "MEDDPICC",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Monitoring",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Observability",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Open source",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Technical support",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Training",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": false,
+    "timezone": false,
+    "locationType": "remote_countries",
+    "location": [
+     {
+      "id": "Israel",
+      "timezone": 3.0,
+      "countryCode": "IL",
+      "latitude": 31.046051,
+      "longitude": 34.851612
+     }
+    ]
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential"
+   ],
+   "quickApply": true,
+   "finishedApplications": null
+  },
+  {
+   "id": "NwqzBVkd",
+   "objective": "Solutions Design Engineer",
+   "slug": "innovo-global-talent-solutions-design-engineer",
+   "tagline": "You'll drive intralogistics innovation by translating complex technical needs into custom solutions.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 5062440,
+     "hashedId": "o249glBq",
+     "name": "Innovo Global Talent",
+     "status": "approved",
+     "size": null,
+     "publicId": "InnovoGlobalTalent",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1786024626/origin/bio/crawled-organizations/1719926478064_cusr9t.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [],
+   "timezones": null,
+   "remote": true,
+   "external": false,
+   "deadline": "2026-09-05T13:06:12.000Z",
+   "created": "2026-08-06T13:06:12.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "compensation": {
+    "data": {
+     "code": "range",
+     "currency": "EUR",
+     "minAmount": 80000.0,
+     "minHourlyUSD": 48.22357839784298,
+     "maxAmount": 100000.0,
+     "maxHourlyUSD": 60.27947299730373,
+     "periodicity": "yearly",
+     "negotiable": true,
+     "conversionRateUSD": 1.158274772891274
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "Artificial intelligence (AI)",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Customer support",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Market analysis",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Project coordination",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Risk mitigation",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Robotics",
+     "experience": "potential-to-develop",
+     "proficiency": "expert"
+    },
+    {
+     "name": "Sales",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Solutions design",
+     "experience": "potential-to-develop",
+     "proficiency": "expert"
+    },
+    {
+     "name": "Training",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": true,
+    "timezone": false,
+    "locationType": "remote_anywhere",
+    "location": []
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential",
+    "free"
+   ],
+   "quickApply": true,
+   "finishedApplications": 2
+  }
+ ],
+ "aggregators": {},
+ "offset": 3,
+ "pagination": {
+  "previous": "eyJjcmVhdGVkIjoiMjAyNi0wOC0xMVQxMDo0NzowMy4wMDBaIiwic3RhdHVzIjoib3BlbiIsInJhbmtWYWx1ZSI6MC44NDAyNzc3Nzc3Nzc3Nzc5LCJtYXRjaFNjb3JlIjowLjkxNjY2NjY2NjY2NjY2NjcsIm1heFNlcnZpY2VUeXBlIjoiZXNzZW50aWFsIn0=",
+  "next": "eyJjcmVhdGVkIjoiMjAyNi0wOC0wNlQxMzowNjoxMi4wMDBaIiwic3RhdHVzIjoib3BlbiIsInJhbmtWYWx1ZSI6MC44NDAyNzc3Nzc3Nzc3Nzc5LCJtYXRjaFNjb3JlIjowLjkxNjY2NjY2NjY2NjY2NjcsIm1heFNlcnZpY2VUeXBlIjoiZXNzZW50aWFsIn0="
+ }
+}

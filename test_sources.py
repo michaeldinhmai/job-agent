@@ -16,7 +16,9 @@ from pathlib import Path
 import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from jobagent import salary as sal  # noqa: E402
 from jobagent import sources  # noqa: E402
+from jobagent import locations as geo  # noqa: E402
 
 FIX = Path(__file__).parent / "tests" / "fixtures"
 REQUIRED = {"source", "company", "title", "location", "url", "description", "posted_at"}
@@ -97,6 +99,48 @@ def _ashby():
     rows = list(sources.fetch_ashby(client_for({"api.ashbyhq.com": raw}), "render"))
     assert_schema(rows)
     assert any(r["description"] for r in rows), "html fallback produced nothing"
+
+
+@check("ashby: a remote posting anchored to a city is not read as on-site")
+def _ashby_remote_flag():
+    raw = load("ashby")
+    j = raw["jobs"][0]
+    j["location"] = "Charlotte"      # anchor office, not where it's worked
+    j["isRemote"] = True
+    j["workplaceType"] = "Remote"
+    rows = list(sources.fetch_ashby(client_for({"api.ashbyhq.com": raw}), "maybern"))
+    loc = rows[0]["location"]
+    # locations.remote_label() only labels when city AND state are None, so
+    # the anchor city has to be dropped or the recovered flag is inert.
+    city, state, country = geo.parse_us_location(loc)
+    assert geo.remote_label(city, state, country) is not None, (
+        f"location {loc!r} still reads as on-site — the remote-or-local gate "
+        "would reject a genuinely remote role")
+    assert country == "United States", f"country lost: {loc!r}"
+
+
+@check("ashby: an on-site posting keeps its real location")
+def _ashby_onsite_untouched():
+    raw = load("ashby")
+    j = raw["jobs"][0]
+    j["location"] = "Charlotte"
+    j["isRemote"] = False
+    j["workplaceType"] = "On-site"
+    rows = list(sources.fetch_ashby(client_for({"api.ashbyhq.com": raw}), "x"))
+    assert rows[0]["location"] == "Charlotte", rows[0]["location"]
+
+
+@check("ashby: requests compensation and feeds it to the salary parser")
+def _ashby_compensation():
+    requested.clear()
+    raw = load("ashby")
+    raw["jobs"][0]["compensation"] = {
+        "scrapeableCompensationSalarySummary": "$180K - $270K"}
+    rows = list(sources.fetch_ashby(client_for({"api.ashbyhq.com": raw}), "maybern"))
+    assert any("includeCompensation=true" in u for u in requested), \
+        "without the parameter Ashby omits the compensation object entirely"
+    assert sal.parse_salary(rows[0]["description"]) == (180_000, 270_000), \
+        "pay is only in `compensation`, never the description — it must be appended"
 
 
 @check("smartrecruiters: follows offset pagination instead of one page")
@@ -188,6 +232,109 @@ def _himalayas():
     offsets = [u.split("offset=")[1].split("&")[0] for u in requested]
     assert offsets[:2] == ["0", str(n)], \
         f"offset must advance by rows returned ({n}), got {offsets[:2]}"
+
+
+@check("torre: pages by cursor, because offset is accepted and ignored")
+def _torre_pagination():
+    requested.clear()
+    p0, p1 = load("torre_page0"), load("torre_page1")
+
+    def handler(request):
+        url = str(request.url)
+        requested.append(url)
+        if "/suite/opportunities/" in url:
+            return httpx.Response(200, json=load("torre_detail"))
+        return httpx.Response(200, json=p1 if "after=" in url else p0)
+
+    c = httpx.Client(transport=httpx.MockTransport(handler))
+    rows = list(sources.fetch_torre(c, ["solutions engineer"], per_role=6,
+                                    descriptions=False))
+    assert_schema(rows, want_department=False)
+    searches = [u for u in requested if "_search" in u]
+    assert len(searches) >= 2, f"never paged: {searches}"
+    assert any("after=" in u for u in searches), (
+        "second page must be requested with the pagination cursor — Torre "
+        "returns page one again for any offset")
+    urls = [r["url"] for r in rows]
+    assert len(set(urls)) == len(urls), f"duplicate rows across pages: {urls}"
+
+
+@check("torre: never requests a page larger than the server accepts")
+def _torre_page_cap():
+    requested.clear()
+    p0 = load("torre_page0")
+
+    def handler(request):
+        requested.append(str(request.url))
+        return httpx.Response(200, json=p0)
+
+    c = httpx.Client(transport=httpx.MockTransport(handler))
+    list(sources.fetch_torre(c, ["solutions engineer"], per_role=200,
+                             descriptions=False))
+    sizes = [int(u.split("size=")[1].split("&")[0]) for u in requested if "size=" in u]
+    assert sizes, "no sized request issued"
+    assert max(sizes) <= sources.TORRE_MAX_PAGE, (
+        f"requested size {max(sizes)} — Torre answers HTTP 400 "
+        f'"Request size ... too large" above roughly 36')
+
+
+@check("torre: sends the server-side role filter, not an unfiltered crawl")
+def _torre_role_filter():
+    sent = []
+
+    def handler(request):
+        sent.append(json.loads(request.content) if request.content else {})
+        return httpx.Response(200, json={"results": [], "pagination": {}})
+
+    c = httpx.Client(transport=httpx.MockTransport(handler))
+    list(sources.fetch_torre(c, ["solutions engineer"], per_role=3, descriptions=False))
+    assert sent, "no request issued"
+    blob = json.dumps(sent[0])
+    assert "skill/role" in blob and "solutions engineer" in blob, (
+        f"role filter missing from body {blob!r} — unfiltered this endpoint "
+        "returns ~305k postings")
+
+
+@check("torre: remote postings keep their country, anywhere-remote stays open")
+def _torre_location():
+    for job, want in [
+        ({"remote": True, "locations": ["United States"],
+          "place": {"remote": True, "locationType": "remote_countries"}},
+         "Remote - United States"),
+        ({"remote": True, "locations": ["Sweden"],
+          "place": {"remote": True, "locationType": "remote_countries"}},
+         "Remote - Sweden"),
+        ({"remote": True, "locations": [],
+          "place": {"remote": True, "anywhere": True,
+                    "locationType": "remote_anywhere"}}, "Remote - Worldwide"),
+        ({"remote": False, "locations": ["Colombia"], "place": {"remote": False}},
+         "Colombia"),
+    ]:
+        got = sources._torre_location(job)
+        assert got == want, f"{job['locations']} -> {got!r}, want {want!r}"
+    # The country has to survive, or the US gate can't tell these apart.
+    assert geo.classify(sources._torre_location(
+        {"remote": True, "locations": ["United States"], "place": {}})) == "us"
+    assert geo.classify(sources._torre_location(
+        {"remote": True, "locations": ["Sweden"], "place": {}})) == "elsewhere"
+
+
+@check("torre: only USD annual pay reaches the salary parser")
+def _torre_compensation():
+    usd = {"compensation": {"data": {"currency": "USD", "periodicity": "yearly",
+                                     "minAmount": 180000.0, "maxAmount": 270000.0}}}
+    assert sal.parse_salary(sources._torre_pay(usd)) == (180_000, 270_000)
+    # A 1.1M SEK salary read as dollars would be a wildly wrong comp signal.
+    sek = {"compensation": {"data": {"currency": "SEK", "periodicity": "yearly",
+                                     "minAmount": 1119000.0, "maxAmount": 1400000.0}}}
+    assert sources._torre_pay(sek) == "", "non-USD currency must be dropped"
+    # "to-be-agreed" postings report 0.0 rather than null.
+    tba = {"compensation": {"data": {"currency": "USD", "periodicity": "yearly",
+                                     "minAmount": 0.0, "maxAmount": 0.0}}}
+    assert sources._torre_pay(tba) == "", "zero-amount posting must not yield a salary"
+    monthly = {"compensation": {"data": {"currency": "USD", "periodicity": "monthly",
+                                         "minAmount": 5000.0, "maxAmount": 7000.0}}}
+    assert sources._torre_pay(monthly) == "", "monthly rate is not an annual salary"
 
 
 @check("rss: splits 'Company: Role' titles when company_from_title is set")

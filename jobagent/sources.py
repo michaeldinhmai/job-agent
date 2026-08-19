@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 
 import httpx
 
+from . import locations as geo
+
 TIMEOUT = httpx.Timeout(20.0)
 HEADERS = {"User-Agent": "job-agent/0.1 (personal job search)"}
 
@@ -117,18 +119,55 @@ def fetch_lever(client: httpx.Client, company: str):
 
 
 def fetch_ashby(client: httpx.Client, board: str):
-    url = f"https://api.ashbyhq.com/posting-api/job-board/{board}"
+    """Ashby's public job board.
+
+    Two things the obvious implementation gets wrong, both measured against
+    live boards rather than assumed:
+
+    1. `location` is the role's ANCHOR office, not where it can be worked
+       from. Ashby carries the remote fact separately in `isRemote` /
+       `workplaceType`, and roughly half of all postings across the
+       configured boards (1226 of 2469 when this was written) are remote
+       while naming a city. Reading `location` alone throws that away, and a
+       remote-or-local location gate then rejects a genuinely remote role.
+       When a posting is remote the anchor city is deliberately dropped in
+       favour of "Remote - <country>": locations.remote_label() only returns
+       a label when city and state are both None, so keeping the city would
+       defeat the very flag being recovered. The city is still in the JD and
+       the posting URL.
+    2. Compensation lives behind `?includeCompensation=true` and appears in
+       a `compensation` object, NOT in the description — so salary parsing
+       sees nothing without both the parameter and the append below.
+    """
+    url = f"https://api.ashbyhq.com/posting-api/job-board/{board}?includeCompensation=true"
     for job in _get(client, url).json().get("jobs", []):
+        raw_location = job.get("location") or ""
+        remote = bool(job.get("isRemote")) or job.get("workplaceType") == "Remote"
+        location = raw_location
+        if remote:
+            _, _, country = geo.parse_us_location(raw_location)
+            if country:
+                location = f"Remote - {country}"
+            elif not raw_location:
+                location = "Remote"
+            # An unrecognised non-empty location is left as-is rather than
+            # guessed at — a wrong country is worse than a missing flag.
+
+        body = clean(job.get("descriptionPlain") or job.get("descriptionHtml"))
+        pay = (job.get("compensation") or {}).get("scrapeableCompensationSalarySummary")
+        if pay:
+            # Fed to salary.parse_salary() via the description, which is the
+            # only place it looks.
+            body = f"{body} Compensation: {pay}."
+
         yield {
             "source": f"ashby:{board}",
             "company": board,
             "title": job.get("title", ""),
             "department": job.get("department", ""),
-            "location": job.get("location", ""),
+            "location": location,
             "url": job.get("jobUrl", ""),
-            "description": clean(
-                job.get("descriptionPlain") or job.get("descriptionHtml")
-            ),
+            "description": body,
             "posted_at": job.get("publishedAt"),
         }
 
@@ -416,6 +455,121 @@ def fetch_himalayas(client: httpx.Client, limit: int = 500):
         fetched += len(jobs)
 
 
+TORRE_SEARCH = "https://search.torre.co/opportunities/_search/"
+TORRE_DETAIL = "https://torre.ai/api/suite/opportunities/{}"
+TORRE_POST = "https://torre.ai/post/{}"
+# Torre rejects an oversized page with HTTP 400 and the message "Request size
+# by <user-agent> too large: N". Measured: 36 accepted, 40 refused every time,
+# and the exact ceiling is undocumented and appears to vary by caller. 20 is
+# comfortably inside it and costs nothing — search pages are a rounding error
+# next to the per-posting detail fetches.
+TORRE_MAX_PAGE = 20
+
+
+def _torre_location(job: dict) -> str:
+    """Torre states remoteness separately from the country list, the same way
+    Ashby does — and for the same reason the country must survive while the
+    city does not, see fetch_ashby."""
+    countries = [c for c in (job.get("locations") or []) if c]
+    place = job.get("place") or {}
+    remote = bool(job.get("remote")) or place.get("remote")
+    if not remote:
+        return ", ".join(countries)
+    if place.get("anywhere") or place.get("locationType") == "remote_anywhere":
+        # Open to anyone anywhere, which includes the US.
+        return "Remote - Worldwide"
+    if countries:
+        # Multi-country remote roles list every eligible country; keep them all
+        # so locations.classify() sees a US signal when the US is among them.
+        return "Remote - " + ", ".join(countries)
+    return "Remote"
+
+
+def _torre_pay(job: dict) -> str:
+    """Render compensation as text for salary.parse_salary(), but only when
+    it's a real USD annual figure. Torre carries SEK/JPY/ILS/EUR ranges too,
+    and a 1,119,000 SEK salary read as dollars is far worse than no salary."""
+    data = (job.get("compensation") or {}).get("data") or {}
+    if data.get("currency") != "USD" or data.get("periodicity") != "yearly":
+        return ""
+    lo, hi = data.get("minAmount") or 0, data.get("maxAmount") or 0
+    if not lo and not hi:
+        return ""                      # "to-be-agreed" postings report 0.0
+    lo, hi = int(lo), int(hi)
+    if lo and hi and hi != lo:
+        return f" Compensation: ${lo:,} - ${hi:,} per year."
+    return f" Compensation: ${(lo or hi):,} per year."
+
+
+def fetch_torre(client: httpx.Client, roles: list[str], per_role: int = 60,
+                descriptions: bool = True):
+    """Torre.ai's public opportunity search. No key or account needed.
+
+    Three things this endpoint does that will bite an obvious implementation,
+    all confirmed against the live API:
+
+    1. `offset` is accepted and then IGNORED — `?offset=3` returns byte-for-byte
+       the same page as `?offset=0`. Paging is cursor-based via
+       `pagination.next`, passed back as `after=`. Trusting offset silently
+       re-reads page one forever.
+    2. The catalogue is ~305k postings and mostly irrelevant, so the
+       server-side `skill/role` filter is not an optimisation, it's the only
+       thing making this source usable — "solutions engineer" narrows it to
+       ~1.6k.
+    3. Descriptions are on a separate endpoint keyed by opportunity id, and
+       the search result carries only a one-line `tagline`.
+    """
+    seen: set[str] = set()
+    for role in roles:
+        body = {"and": [{"skill/role": {"text": role,
+                                        "experience": "potential-to-develop"}}]}
+        cursor, pulled = None, 0
+        while pulled < per_role:
+            size = min(TORRE_MAX_PAGE, per_role - pulled)
+            url = f"{TORRE_SEARCH}?size={size}&aggregate=false"
+            if cursor:
+                url += f"&after={cursor}"
+            resp = client.post(url, json=body, headers=HEADERS, timeout=TIMEOUT)
+            resp.raise_for_status()
+            page = resp.json()
+            results = page.get("results", [])
+            if not results:
+                break
+            for job in results:
+                jid, slug = job.get("id"), job.get("slug")
+                if not jid or not slug or jid in seen:
+                    continue
+                seen.add(jid)
+                body_text = clean(job.get("tagline") or "")
+                if descriptions:
+                    body_text = _torre_description(client, jid) or body_text
+                orgs = [o.get("name") for o in (job.get("organizations") or [])
+                        if o.get("name")]
+                yield {
+                    "source": "torre",
+                    "company": orgs[0] if orgs else "",
+                    "title": job.get("objective", ""),
+                    "department": "",
+                    "location": _torre_location(job),
+                    "url": TORRE_POST.format(slug),
+                    "description": clean(body_text + _torre_pay(job)),
+                    "posted_at": job.get("created"),
+                }
+            pulled += len(results)
+            cursor = (page.get("pagination") or {}).get("next")
+            if not cursor:
+                break
+
+
+def _torre_description(client: httpx.Client, job_id: str) -> str:
+    """One extra request per posting; the search payload has no description."""
+    try:
+        det = _get(client, TORRE_DETAIL.format(job_id)).json()
+        return " ".join(p.get("content") or "" for p in (det.get("details") or []))
+    except Exception:
+        return ""
+
+
 def fetch_all(config: dict, only: str | None = None):
     """Yield (source_label, jobs, error) for each configured source."""
     src = config.get("sources", {})
@@ -470,6 +624,10 @@ def fetch_all(config: dict, only: str | None = None):
     if himalayas:
         opts = himalayas if isinstance(himalayas, dict) else {}
         plan.append(("himalayas", lambda c: fetch_himalayas(c, opts.get("limit", 500))))
+    torre = src.get("torre")
+    if torre and torre.get("roles"):
+        plan.append(("torre", lambda c, t=torre: fetch_torre(
+            c, t["roles"], t.get("per_role", 60), t.get("descriptions", True))))
 
     with httpx.Client() as client:
         for label, fn in plan:

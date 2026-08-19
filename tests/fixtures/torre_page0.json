@@ -1,0 +1,350 @@
+{
+ "total": 1625,
+ "size": 3,
+ "results": [
+  {
+   "id": "lWgDRl8w",
+   "objective": "Senior Solutions Engineer (SE) – Sweden (Remote)",
+   "slug": "grafana-labs-senior-solutions-engineer-se-sweden-remote",
+   "tagline": "You'll bridge technical innovation and customer success by architecting scalable observability.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 732594,
+     "hashedId": "bopA9avG",
+     "name": "Grafana Labs",
+     "status": "approved",
+     "size": 1,
+     "publicId": "GrafanaLabs",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1785226802/origin/bio/crawled-organizations/grafana_labs_logo_aptwks.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [
+    "Sweden"
+   ],
+   "timezones": null,
+   "remote": true,
+   "external": true,
+   "deadline": "2026-08-28T01:45:59.000Z",
+   "created": "2026-08-18T01:46:05.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "externalApplicationUrl": "https://job-boards.greenhouse.io/grafanalabs/jobs/5789080004",
+   "compensation": {
+    "data": {
+     "code": "range",
+     "currency": "SEK",
+     "minAmount": 1119000.0,
+     "minHourlyUSD": 61.22909412195444,
+     "maxAmount": 1400000.0,
+     "maxHourlyUSD": 76.60476476383933,
+     "periodicity": "yearly",
+     "negotiable": false,
+     "conversionRateUSD": 0.10516097463611937
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "Grafana",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Monitoring",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Open source",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": false,
+    "timezone": false,
+    "locationType": "remote_countries",
+    "location": [
+     {
+      "id": "Sweden",
+      "timezone": 1.0,
+      "countryCode": "SE",
+      "latitude": 60.128161,
+      "longitude": 18.643501
+     }
+    ]
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential"
+   ],
+   "quickApply": true,
+   "finishedApplications": null
+  },
+  {
+   "id": "qdP91emr",
+   "objective": "Senior Solutions Engineer",
+   "slug": "grafana-labs-senior-solutions-engineer",
+   "tagline": "You will bridge technical innovation and customer success by driving open observability solutions.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 732594,
+     "hashedId": "bopA9avG",
+     "name": "Grafana Labs",
+     "status": "approved",
+     "size": 1,
+     "publicId": "GrafanaLabs",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1785226802/origin/bio/crawled-organizations/grafana_labs_logo_aptwks.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [
+    "Japan"
+   ],
+   "timezones": null,
+   "remote": true,
+   "external": true,
+   "deadline": "2026-08-28T01:45:35.000Z",
+   "created": "2026-08-18T01:45:43.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "externalApplicationUrl": "https://job-boards.greenhouse.io/grafanalabs/jobs/6104605004",
+   "compensation": {
+    "data": {
+     "code": "range",
+     "currency": "JPY",
+     "minAmount": 14000000.0,
+     "minHourlyUSD": 45.794878719460044,
+     "maxAmount": 18500000.0,
+     "maxHourlyUSD": 60.51466116500078,
+     "periodicity": "yearly",
+     "negotiable": false,
+     "conversionRateUSD": 0.0062761992090733755
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "Grafana",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Monitoring",
+     "experience": "potential-to-develop",
+     "proficiency": "expert"
+    },
+    {
+     "name": "Open source",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": false,
+    "timezone": false,
+    "locationType": "remote_countries",
+    "location": [
+     {
+      "id": "Japan",
+      "timezone": 9.0,
+      "countryCode": "JP",
+      "latitude": 36.204824,
+      "longitude": 138.252924
+     }
+    ]
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential"
+   ],
+   "quickApply": true,
+   "finishedApplications": null
+  },
+  {
+   "id": "OwGLyVAd",
+   "objective": "Senior Pre-Sales Engineer (Solutions Engineer) for APAC",
+   "slug": "deepgram-senior-pre-sales-engineer-solutions-engineer-for-apac",
+   "tagline": "You will drive the future of voice AI in APAC by architecting scalable enterprise solutions.",
+   "theme": "default",
+   "type": "full-time-employment",
+   "opportunity": "employee",
+   "organizations": [
+    {
+     "id": 757754,
+     "hashedId": "ko44wNyo",
+     "name": "Deepgram",
+     "status": "approved",
+     "size": 208,
+     "publicId": "Deepgram",
+     "picture": "https://res.cloudinary.com/torre-technologies-co/image/upload/v1760817301/origin/bio/crawled-organizations/deepgram_logo_dsnlbq.jpg",
+     "theme": "default"
+    }
+   ],
+   "locations": [
+    "Singapore"
+   ],
+   "timezones": null,
+   "remote": true,
+   "external": true,
+   "deadline": "2026-08-24T10:46:06.000Z",
+   "created": "2026-08-14T00:45:47.000Z",
+   "status": "open",
+   "commitment": "full-time",
+   "externalApplicationUrl": "https://jobs.ashbyhq.com/deepgram/d28f0a61-4a59-4817-b101-3457077b01b7",
+   "compensation": {
+    "data": {
+     "code": "to-be-agreed",
+     "currency": "USD",
+     "minAmount": 0.0,
+     "minHourlyUSD": 0.0,
+     "maxAmount": 0.0,
+     "maxHourlyUSD": 0.0,
+     "periodicity": "monthly",
+     "negotiable": false,
+     "conversionRateUSD": 1.0
+    },
+    "visible": true,
+    "additionalCompensationDetails": {}
+   },
+   "skills": [
+    {
+     "name": "AI agents",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "API design",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Authentication",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Cloud platforms",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Docker",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Helm",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "JavaScript",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Kubernetes",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Python",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Rust",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "Session Initiation Protocol (SIP)",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Speech recognition",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "Streaming",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "TypeScript",
+     "experience": "potential-to-develop",
+     "proficiency": "proficient"
+    },
+    {
+     "name": "WebRTC",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    },
+    {
+     "name": "WebSocket",
+     "experience": "potential-to-develop",
+     "proficiency": "no-experience-interested"
+    }
+   ],
+   "place": {
+    "remote": true,
+    "anywhere": false,
+    "timezone": false,
+    "locationType": "remote_countries",
+    "location": [
+     {
+      "id": "Singapore",
+      "timezone": 8.0,
+      "countryCode": "SG",
+      "latitude": 1.352083,
+      "longitude": 103.819836
+     }
+    ]
+   },
+   "questions": [],
+   "context": {
+    "signaled": [],
+    "applicationStatus": null
+   },
+   "additionalCompensation": [],
+   "additionalCompensationDetails": {},
+   "serviceTypes": [
+    "essential"
+   ],
+   "quickApply": true,
+   "finishedApplications": null
+  }
+ ],
+ "aggregators": {},
+ "offset": 0,
+ "pagination": {
+  "previous": null,
+  "next": "eyJjcmVhdGVkIjoiMjAyNi0wOC0xNFQwMDo0NTo0Ny4wMDBaIiwic3RhdHVzIjoib3BlbiIsInJhbmtWYWx1ZSI6MC44NDAyNzc3Nzc3Nzc3Nzc5LCJtYXRjaFNjb3JlIjowLjkxNjY2NjY2NjY2NjY2NjcsIm1heFNlcnZpY2VUeXBlIjoiZXNzZW50aWFsIn0="
+ }
+}

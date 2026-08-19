@@ -75,6 +75,8 @@
     "_comeet_notes": "Add {\"name\": ..., \"uid\": ..., \"token\": ...}. Comeet customers embed their own uid/token in the COMEET.init({...}) block on their public careers page — view source to find them. They're public widget identifiers (same role as a Greenhouse board slug), not secrets.",
     "remoteok": false,
     "himalayas": false,
+    "torre": {},
+    "_torre_notes": "torre.ai's public opportunity search — no key or account needed. Set {\"roles\": [\"your target title\", ...], \"per_role\": 40, \"descriptions\": true} to enable. The catalogue is ~305k postings and the server-side skill/role filter is the only thing that makes it tractable, so `roles` is required; an empty object disables the source. descriptions:true costs one extra request per posting.",
     "_broad_feeds_notes": "remoteok/himalayas are global, unscoped feeds — no company list, every listing on the platform, same idea as the rss feeds above. Set remoteok to true to enable it. Set himalayas to {\"limit\": 500} to enable it (it has ~95k jobs and no working keyword filter, so this only samples the most recent `limit` postings — raise it for more coverage at the cost of a slower ingest). Both rely entirely on titles/keywords/locations above to do the filtering, so expect more noise than the curated ATS boards."
   },
 
