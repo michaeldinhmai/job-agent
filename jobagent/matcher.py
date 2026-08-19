@@ -117,6 +117,24 @@ def score(job: dict, config: dict) -> tuple[int, str]:
 
     if (include_titles or soft_titles) and not matched:
         return -1, f"title matches none of {include_titles + soft_titles}"
+
+    # Words that are fine as part of a target title but disqualifying when
+    # bolted onto one. "Manager" is the motivating case: "Technical Account
+    # Manager" is an individual-contributor target role, while "Sales Engineer
+    # Enablement Manager" and "Manager, Solutions Architect" are people
+    # management. titles.exclude cannot express this — it is evaluated
+    # unconditionally and before the include list, so listing "manager" there
+    # rejects every TAM too. Here the matched target phrase is removed first
+    # and the term is only disqualifying if it survives in the remainder.
+    for term in titles.get("exclude_outside_match", []):
+        if not has(term, title):
+            continue
+        remainder = title
+        for phrase in matched:
+            remainder = remainder.replace(phrase, " ")
+        if has(term, remainder):
+            return -1, f"excluded: {term!r} outside the matched title"
+
     if matched:
         total += TITLE_HIT
         reasons.append(f"title~{matched[0]!r} +{TITLE_HIT}")

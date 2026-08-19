@@ -20,9 +20,11 @@ from jobagent import matcher  # noqa: E402
 # one person's job search. Kept in-file so the suite has no data dependency.
 FIXTURE = {
     "titles": {
-        "include": ["sales engineer", "technical account", "solutions consultant"],
+        "include": ["sales engineer", "technical account manager",
+                    "solutions consultant"],
         "include_needs_technical_signal": ["customer success manager", "account manager"],
         "exclude": ["intern", "engineering manager", "account executive"],
+        "exclude_outside_match": ["manager"],
     },
     "keywords": {
         # Negative weight demotes without rejecting; that's what keeps
@@ -49,8 +51,13 @@ CASES = [
     ("Senior Solutions Consultant", "", False),
     ("Pre-Sales Engineer", "", False),
     ("Account Executive, Enterprise", "", True),
-    # Soft title tier (titles.include_needs_technical_signal): a generic
-    # post-sale title only passes with a technical-signal keyword hit.
+    # exclude_outside_match: "manager" is intrinsic to the Technical Account
+    # Manager target title, but disqualifying when bolted onto one.
+    ("Senior Technical Account Manager", "", False),
+    ("Technical Account Manager, Enterprise", "", False),
+    ("Sales Engineer Enablement Manager", "", True),
+    ("Manager, Solutions Consultant", "", True),
+    ("Solutions Consultant", "", False),
 ]
 
 # Soft-tier behaviour (titles.include_needs_technical_signal): an ambiguous
