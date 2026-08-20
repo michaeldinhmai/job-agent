@@ -162,6 +162,9 @@ async function showJobDetail(id) {
     <div class="field"><label>Match % / status / source</label>
       <div>${j.score_pct}/100 (raw ${j.score}) · <span class="badge ${j.status}">${j.status}</span> · ${escapeHtml(j.source)}${j.stale ? " · <span class=\"badge stale\">stale (30+ days)</span>" : ""}</div>
     </div>
+    ${(j.onsite_risk && j.onsite_risk.length) ? `<div class="field"><label>Location risk</label>
+      <div class="reasons">The job description mentions ${escapeHtml(j.onsite_risk.join(", "))} —
+      the location field says remote, so check before applying.</div></div>` : ""}
     <div class="field"><label>Salary (parsed from JD)</label><div>${escapeHtml(j.salary_label) || "not disclosed / not found"}</div></div>
     <div class="field"><label>Why it matched</label><div class="reasons">${escapeHtml(j.reasons)}</div></div>
     <div class="field"><label>Hiring manager</label>

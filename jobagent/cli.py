@@ -133,6 +133,9 @@ def cmd_list(args) -> None:
         print(f"        {where}  |  {row['status']}"
               + (f"  |  {pay}" if pay else "")
               + (f"  |  HM: {row['hiring_manager']}" if row["hiring_manager"] else ""))
+        risk = geo.onsite_risk(row["description"])
+        if risk:
+            print(f"        !! may require office presence: {', '.join(risk)}")
         print(f"        {row['url']}")
         print(f"        why: {row['reasons']}\n")
     print(f"{len(rows)} shown (match >= {matcher.to_percent(floor)}/100)")
@@ -151,6 +154,9 @@ def cmd_show(args) -> None:
     print(f"{'state':>14}: {row['state'] or '—'}")
     print(f"{'country':>14}: {row['country'] or '—'}")
     print(f"{'salary':>14}: {sal.format_salary(row['salary_min'], row['salary_max']) or '—'}")
+    risk = geo.onsite_risk(row["description"])
+    if risk:
+        print(f"{'location risk':>14}: {', '.join(risk)}  (JD body, not the location field)")
     for field in ("source", "reasons", "status", "hiring_manager", "posted_at", "url"):
         value = row[field]
         print(f"{field:>14}: {value if value is not None else '—'}")

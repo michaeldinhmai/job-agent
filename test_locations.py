@@ -74,6 +74,38 @@ def _onsite_checks() -> int:
     return failures
 
 
+def _onsite_risk_checks() -> int:
+    """Advisory flag for office requirements buried in the JD body. Measured
+    at roughly 1-in-3 precision on live data, which is why it warns instead of
+    rejecting — see locations.onsite_risk."""
+    failures = 0
+    cases = [
+        ("able to be in-office 2-3 days/week", True),
+        ("within commutable distance of our NYC office", True),
+        ("required to be in-office Tuesdays and Thursdays", True),
+        ("We offer a hybrid schedule, 3 days in office", True),
+        # "hybrid" describing the ROLE, not the work arrangement.
+        ("This is a hybrid consulting + builder role", False),
+        ("Fully remote, work from anywhere in the US", False),
+        ("remote-first company; offices optional", False),
+        ("", False),
+        (None, False),
+    ]
+    for text, want in cases:
+        got = bool(locations.onsite_risk(text))
+        ok = got == want
+        failures += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} onsite_risk({(text or '')[:44]!r:46}) = {got}")
+    # A posting that names offices but stays open to remote should say so.
+    both = locations.onsite_risk(
+        "within commutable distance of our SF office, though we're open to "
+        "remote candidates for this role")
+    ok = any("remote is OK" in r for r in both)
+    failures += not ok
+    print(f"{'ok  ' if ok else 'FAIL'} contradictory posting is marked as such: {both}")
+    return failures
+
+
 def main() -> int:
     failures = 0
     for text, expected in CASES:

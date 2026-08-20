@@ -263,6 +263,58 @@ def says_onsite(location: str | None) -> bool:
     return bool(location) and ONSITE_RE.search(location) is not None
 
 
+# Office requirements that appear only in the JD body while the structured
+# location still says remote. This is a WARNING, never a gate: measured on
+# live data it is right about one time in three. Of the three postings it
+# flagged, one was genuinely hybrid (Lavendo: "commuting distance of
+# Greenville, DE or Falls Church, VA ... in-office 2-3 days/week"), one named
+# offices but explicitly stayed open to remote candidates (Rillet), and one
+# used "hybrid" to describe the ROLE rather than the work arrangement
+# ("a hybrid consulting + builder role"). Rejecting on that precision would
+# cost more good listings than it saves wasted applications, so the caller
+# surfaces it and a human decides.
+_ONSITE_BODY = [
+    (re.compile(r"\b\d\s*[-–]?\s*\d?\+?\s*days?\s*(?:per|a|/)\s*week[^.]{0,60}?"
+                r"\b(?:in[- ]?office|on-?site|in[- ]person)", re.I),
+     "in-office N days/week"),
+    (re.compile(r"\b(?:in[- ]?office|on-?site)[^.]{0,40}?\b\d\s*[-–]?\s*\d?\+?\s*"
+                r"days?\s*(?:per|a|/)\s*week", re.I),
+     "in-office N days/week"),
+    (re.compile(r"\bcommut(?:able|ing)\s+distance\b", re.I),
+     "commutable distance"),
+    (re.compile(r"\brequired\s+to\s+be\s+(?:in[- ]?office|on-?site)\b", re.I),
+     "required in office"),
+    # "hybrid" only counts near a work-arrangement word, or "a hybrid X role"
+    # (meaning a blended job) trips it.
+    (re.compile(r"\bhybrid\b[^.]{0,30}\b(?:schedule|days?|office|on-?site|week)\b", re.I),
+     "hybrid schedule"),
+    (re.compile(r"\bwilling\s+to\s+relocate\b|\brelocation\s+(?:is\s+)?required\b", re.I),
+     "relocation expected"),
+]
+
+_REMOTE_REASSURANCE = re.compile(
+    r"remote[- ]first|fully[- ]remote|100%\s*remote|work from anywhere|"
+    r"open to remote", re.I)
+
+
+def onsite_risk(description: str | None) -> list[str]:
+    """Reasons a nominally-remote posting may still require office presence.
+
+    Empty list means nothing found. A trailing "but says remote is OK" entry
+    means the posting contradicts itself and is worth reading rather than
+    discarding.
+    """
+    if not description:
+        return []
+    found = []
+    for pattern, label in _ONSITE_BODY:
+        if pattern.search(description) and label not in found:
+            found.append(label)
+    if found and _REMOTE_REASSURANCE.search(description):
+        found.append("but also says remote is OK")
+    return found
+
+
 def remote_label(city: str | None, state: str | None, country: str | None) -> str | None:
     """"Remote, US" / "Remote, UK" style label for postings with no specific
     city or state — the common case for fully-remote listings. Returns None

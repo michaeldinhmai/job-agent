@@ -117,6 +117,9 @@ def job_to_dict(row) -> dict:
     d["remote_label"] = geo.remote_label(row["city"], row["state"], row["country"])
     d["salary_label"] = sal.format_salary(row["salary_min"], row["salary_max"])
     d["stale"] = is_stale(row["posted_at"])
+    # Office requirements stated only in the JD body, where the structured
+    # location still claims remote. Advisory: right about 1 time in 3.
+    d["onsite_risk"] = geo.onsite_risk(row["description"])
     return d
 
 
