@@ -251,6 +251,18 @@ def parse_us_location(location: str | None) -> tuple[str | None, str | None, str
     return (city, state, country)
 
 
+# Text that rules a posting out of being fully remote, whatever else the
+# location says. "Hybrid - US" and "On-site - US" both parse to country=United
+# States with no city or state, which makes remote_label() call them
+# "Remote, US" — right on the parse, wrong on the fact.
+ONSITE_RE = re.compile(r"\b(hybrid|on-?site|in-office|in office)\b", re.I)
+
+
+def says_onsite(location: str | None) -> bool:
+    """True when the raw location text asserts office attendance."""
+    return bool(location) and ONSITE_RE.search(location) is not None
+
+
 def remote_label(city: str | None, state: str | None, country: str | None) -> str | None:
     """"Remote, US" / "Remote, UK" style label for postings with no specific
     city or state — the common case for fully-remote listings. Returns None

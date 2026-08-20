@@ -37,6 +37,8 @@ CASES = [
     # Workato listed a role across Mexico + "San Jose, Costa Rica" and the
     # bare-city match made the whole posting read as US.
     ("Remote - Worldwide", "us"),        # Torre's remote_anywhere shape
+    ("Hybrid - US", "us"),               # US, but see says_onsite: not remote
+    ("On-site - US", "us"),
     ("Remote - Anywhere", "us"),
     ("San Jose, Costa Rica", "elsewhere"),
     ("Guadalajara, Jalisco, Mexico; San Jose, Costa Rica", "elsewhere"),
@@ -52,6 +54,24 @@ CASES = [
     ("2 Locations", "unknown"),        # Workday collapses multi-site postings
     ("", "unknown"),
 ]
+
+
+def _onsite_checks() -> int:
+    """says_onsite() is what stops "Hybrid - US" reading as fully remote: it
+    parses to country=United States with no city, which remote_label() calls
+    "Remote, US". Ashby reports isRemote=true on hybrid roles, so this is the
+    backstop for a whole class of false remotes."""
+    failures = 0
+    for text, want in [("Hybrid - US", True), ("Hybrid - San Francisco, CA", True),
+                       ("On-site - US", True), ("Onsite - New York", True),
+                       ("In-office, Austin TX", True),
+                       ("Remote - United States", False), ("Dallas, TX", False),
+                       ("Remote - Worldwide", False), ("", False), (None, False)]:
+        got = locations.says_onsite(text)
+        ok = got == want
+        failures += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} says_onsite({text!r:32}) = {got}")
+    return failures
 
 
 def main() -> int:

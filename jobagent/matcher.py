@@ -155,8 +155,13 @@ def score(job: dict, config: dict) -> tuple[int, str]:
     # claim never gets here in the first place when united_states_only is on.
     local_cities = locations.get("local_cities")
     if local_cities:
-        city, state, country = geo.parse_us_location(job.get("location"))
-        is_remote = geo.remote_label(city, state, country) is not None
+        raw_location = job.get("location")
+        city, state, country = geo.parse_us_location(raw_location)
+        # A posting that says "Hybrid" or "On-site" is not remote-eligible no
+        # matter how its location parses: "Hybrid - US" yields no city and a US
+        # country, which remote_label() would otherwise report as "Remote, US".
+        is_remote = (geo.remote_label(city, state, country) is not None
+                     and not geo.says_onsite(raw_location))
         is_local = bool(city) and city.lower() in {c.lower() for c in local_cities}
         if not is_remote and not is_local:
             return -1, f"not remote and not in {local_cities}: {job.get('location')!r}"

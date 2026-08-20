@@ -142,7 +142,14 @@ def fetch_ashby(client: httpx.Client, board: str):
     url = f"https://api.ashbyhq.com/posting-api/job-board/{board}?includeCompensation=true"
     for job in _get(client, url).json().get("jobs", []):
         raw_location = job.get("location") or ""
-        remote = bool(job.get("isRemote")) or job.get("workplaceType") == "Remote"
+        # `workplaceType` is authoritative wherever it exists. Ashby sets
+        # isRemote=true on HYBRID roles too — Socure's "Sr. Pre-Sales Solution
+        # Consultant" reports isRemote=true, workplaceType="Hybrid" and
+        # location="Hybrid - US" while actually requiring SF/NYC/Seattle/DC/
+        # Miami. Trusting isRemote alone rewrote 856 of 2486 postings across
+        # the configured boards into fake fully-remote roles.
+        workplace = job.get("workplaceType")
+        remote = (workplace == "Remote") if workplace else bool(job.get("isRemote"))
         location = raw_location
         if remote:
             _, _, country = geo.parse_us_location(raw_location)

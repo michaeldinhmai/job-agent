@@ -119,6 +119,21 @@ def _ashby_remote_flag():
     assert country == "United States", f"country lost: {loc!r}"
 
 
+@check("ashby: workplaceType beats isRemote, which is true on hybrid roles")
+def _ashby_hybrid_not_remote():
+    raw = load("ashby")
+    j = raw["jobs"][0]
+    j["location"] = "Hybrid - US"
+    j["isRemote"] = True          # Ashby really does set this on hybrid roles
+    j["workplaceType"] = "Hybrid"
+    rows = list(sources.fetch_ashby(client_for({"api.ashbyhq.com": raw}), "socure"))
+    loc = rows[0]["location"]
+    assert loc == "Hybrid - US", (
+        f"hybrid role rewritten to {loc!r} — isRemote must not outrank "
+        "workplaceType, or an office-bound role reads as fully remote")
+    assert geo.says_onsite(loc), "the surviving text must still read as on-site"
+
+
 @check("ashby: an on-site posting keeps its real location")
 def _ashby_onsite_untouched():
     raw = load("ashby")
